@@ -59,12 +59,6 @@ export function AdminDashboard() {
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/')}
-                className="text-white hover:text-red-100 text-sm"
-              >
-                View Public Site →
-              </button>
-              <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 bg-red-800 hover:bg-red-900 px-4 py-2 rounded-lg transition-colors"
               >
