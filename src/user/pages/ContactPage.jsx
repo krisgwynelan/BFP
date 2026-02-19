@@ -1,264 +1,468 @@
-import { useEffect, useState } from 'react';
-import { Phone, Mail, MapPin, Clock, Facebook, AlertCircle } from 'lucide-react';
-import { getContactInfo } from '../../utils/storage';
+import { useState, useEffect } from "react";
+import {
+  Phone, Mail, MapPin, Globe, Clock, AlertTriangle,
+  Facebook, ExternalLink, Shield
+} from "lucide-react";
+import { getContactInfo } from "../../utils/storage";
 
+// ─── Default fallback (mirrors DEFAULT_CONTACT_INFO in storage.js) ────────────
+const DEFAULT_DATA = {
+  nationalEmergency: "911",
+  localHotline: "(088) 856-FIRE",
+  email: "bfpcogon@fire.gov.ph",
+  facebookPage: "facebook.com/BFPCogonStation",
+  location: "BFP Cogon Fire Station, Cagayan de Oro City 9000",
+  officeHours: [
+    { type: "Monday – Friday",  time: "8:00 AM – 5:00 PM" },
+    { type: "Saturday",         time: "8:00 AM – 12:00 PM" },
+    { type: "Sunday",           time: "Closed" },
+    { type: "Emergency Line",   time: "24 / 7" },
+  ],
+  barangays: [
+    "J.P. Laurel", "Quezon", "Sto. Niño", "New Pandan", "San Francisco",
+    "Manay", "Tibungco", "Gredu", "Kasilak", "Buenavista",
+    "Cacao", "Dapco", "Consolacion", "San Pedro", "Tagpore",
+    "Malativas", "Kapalong", "Sindaton", "Southern Davao", "Tomado",
+    "San Roque", "Magistral", "Napungas", "New Visayas", "Cagangohan",
+  ],
+};
+
+// ─── Helpers to normalise data coming from storage ────────────────────────────
+function normalise(raw) {
+  if (!raw) return DEFAULT_DATA;
+  return {
+    ...DEFAULT_DATA,    // keep defaults for any field not yet saved
+    ...raw,
+    officeHours: Array.isArray(raw.officeHours) ? raw.officeHours : DEFAULT_DATA.officeHours,
+    barangays:   Array.isArray(raw.barangays)   ? raw.barangays   : DEFAULT_DATA.barangays,
+  };
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+function LiveBadge() {
+  return (
+    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
+      style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
+      <span className="w-2 h-2 rounded-full bg-green-300" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
+      Emergency Services Active
+    </span>
+  );
+}
+
+function StatBlock({ value, label, accent }) {
+  return (
+    <div className="text-center px-5 py-4 rounded-xl"
+      style={{ background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.22)", minWidth: "100px" }}>
+      <p className="font-black text-2xl leading-none"
+        style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.06em", color: accent || "white" }}>
+        {value}
+      </p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function ContactCard({ icon, label, value, href, description, accent = "#c0392b" }) {
+  const [hov, setHov] = useState(false);
+
+  const inner = (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      className="relative overflow-hidden rounded-2xl h-full p-6 cursor-default"
+      style={{
+        background: "white",
+        border: `1.5px solid ${hov ? accent + "50" : "#f0e8e5"}`,
+        boxShadow: hov ? `0 12px 32px ${accent}20` : "0 2px 8px rgba(0,0,0,0.04)",
+        transform: hov ? "translateY(-4px)" : "none",
+        transition: "all 0.22s ease",
+      }}>
+      {/* top accent strip */}
+      <div className="absolute top-0 left-0 right-0 h-[3px]"
+        style={{ background: `linear-gradient(90deg, ${accent}, ${accent}80)`, opacity: hov ? 1 : 0, transition: "opacity 0.2s" }} />
+
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+        style={{ background: hov ? `${accent}18` : "rgba(192,57,43,0.06)", border: `1.5px solid ${hov ? accent + "30" : "#f0e8e5"}`, color: accent, transition: "all 0.2s" }}>
+        {icon}
+      </div>
+      <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#c4b5b0" }}>{label}</p>
+      <p className="font-bold text-base break-words leading-snug mb-1" style={{ color: "#1c1917" }}>{value || "—"}</p>
+      {description && <p className="text-xs mt-1" style={{ color: "#a8a29e" }}>{description}</p>}
+    </div>
+  );
+
+  if (!href) return inner;
+  return (
+    <a
+      href={href}
+      target={href.startsWith("mailto") || href.startsWith("tel") ? "_self" : "_blank"}
+      rel="noreferrer"
+      className="block h-full"
+      style={{ textDecoration: "none" }}>
+      {inner}
+    </a>
+  );
+}
+
+function BarangayChip({ name }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <span
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-default"
+      style={{
+        background:  hov ? "rgba(192,57,43,0.09)" : "white",
+        border:      `1.5px solid ${hov ? "rgba(192,57,43,0.25)" : "#f0e8e5"}`,
+        color:       hov ? "#c0392b" : "#57534e",
+        transform:   hov ? "translateY(-2px)" : "none",
+        boxShadow:   hov ? "0 4px 12px rgba(192,57,43,0.1)" : "none",
+        transition:  "all 0.18s ease",
+      }}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: hov ? "#c0392b" : "#d4b8b3", transition: "background 0.18s" }} />
+      {name}
+    </span>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export function ContactPage() {
-  const [contactInfo, setContactInfo] = useState(null);
+  const [contact, setContact] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
+  // Initial load
   useEffect(() => {
-    setContactInfo(getContactInfo());
+    const info = getContactInfo();
+    setContact(normalise(info));
+    setTimeout(() => setMounted(true), 80);
   }, []);
 
-  if (!contactInfo) {
-    return <div>Loading...</div>;
+  // Poll every 2 s — picks up any saves made on the admin ContactManager
+  useEffect(() => {
+    const id = setInterval(() => {
+      const info = getContactInfo();
+      if (info) setContact(normalise(info));
+    }, 2000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Loading state
+  if (!contact) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#fdf9f8" }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-t-transparent"
+            style={{ borderColor: "#c0392b", animation: "spin 1s linear infinite" }} />
+          <p className="text-sm font-semibold" style={{ color: "#a8a29e" }}>Loading contact information…</p>
+        </div>
+      </div>
+    );
   }
 
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.location || "BFP Cogon Fire Station Cagayan de Oro")}`;
+  const fbHref  = contact.facebookPage
+    ? (contact.facebookPage.startsWith("http") ? contact.facebookPage : `https://${contact.facebookPage}`)
+    : undefined;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-red-50 to-orange-50">
-      {/* Hero Section with Animated Background */}
-      <section className="relative bg-gradient-to-r from-red-700 via-red-600 to-orange-600 text-white py-20 overflow-hidden">
-        {/* Animated Circles */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-6">
-              <Phone className="w-10 h-10" />
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">Contact Us</h1>
-            <div className="w-24 h-1 bg-white mx-auto mb-4 rounded-full"></div>
-            <p className="text-xl text-red-100 max-w-2xl mx-auto">
-              We're here to help 24/7. Reach out to us for emergencies or inquiries.
-            </p>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#fdf9f8", minHeight: "100vh" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        * { box-sizing: border-box; }
+        @keyframes pulseDot  { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.8);} }
+        @keyframes ticker    { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        @keyframes spin      { to{transform:rotate(360deg)} }
+        @keyframes fadeUp    { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+        .ticker-outer { overflow: hidden; }
+        .ticker-inner { animation: ticker 30s linear infinite; white-space: nowrap; display: flex; gap: 80px; }
+        .ticker-inner:hover { animation-play-state: paused; }
+        a { text-decoration: none; color: inherit; }
+      `}</style>
+
+
+
+      {/* ── HERO ── */}
+      <section
+        className="relative py-16 sm:py-10 overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%",
+          opacity: mounted ? 1 : 0,
+          transition: "opacity 0.7s ease",
+        }}>
+        {/* grid texture */}
+        <div className="absolute inset-0 pointer-events-none opacity-10"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.15) 1px,transparent 1px)",
+            backgroundSize: "40px 40px",
+          }} />
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="mb-5"><LiveBadge /></div>
+
+          <h1 className="font-black text-white leading-none mb-4"
+            style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(6rem, 8vw, 8rem)", letterSpacing: "0.05em" }}>
+            EMERGENCY<br />
+            <span style={{ opacity: 0.88 }}>CONTACTS</span>
+          </h1>
+
+          <p className="mb-10 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.7)", maxWidth: "440px" }}>
+            Bureau of Fire Protection — Cogon Fire Station.<br />
+            Prepared. Responsive. Committed to your safety.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <StatBlock value={contact.nationalEmergency || "911"} label="Emergency"   accent="#fde68a" />
+            <StatBlock value="24/7"                               label="Response"    accent="#6ee7b7" />
+            <StatBlock value={contact.barangays.length}           label="Barangays"   accent="#93c5fd" />
+            <StatBlock value="<5min"                              label="Avg. Response" accent="#fda4af" />
           </div>
         </div>
       </section>
 
-      {/* Emergency Hotline - Featured Card */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10 mb-12">
-        <div className="bg-gradient-to-r from-red-600 via-red-700 to-red-800 rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
-          <div className="p-8 md:p-12">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-white/30 rounded-full blur-xl animate-pulse"></div>
-                  <div className="relative w-24 h-24 bg-white rounded-full flex items-center justify-center">
-                    <Phone className="text-red-600 w-12 h-12" />
-                  </div>
-                </div>
-                <div className="text-white">
-                  <h2 className="text-3xl md:text-4xl font-bold mb-2">Emergency Hotline</h2>
-                  <p className="text-5xl md:text-6xl font-bold tracking-wider">{contactInfo.nationalEmergency}</p>
-                  <p className="text-red-100 mt-2 text-lg">For immediate fire and rescue emergencies</p>
-                </div>
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-white">
-                <div className="flex items-center gap-3 mb-2">
-                  <AlertCircle className="w-6 h-6" />
-                  <span className="font-bold text-lg">Available 24/7</span>
-                </div>
-                <p className="text-sm text-red-100">
-                  Our team is always ready to respond to your emergency calls
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Cards Grid - Modern Design */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Local Hotline Card */}
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
-            <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-600"></div>
-            <div className="p-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Phone className="text-white w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Local Hotline</h3>
-              <p className="text-3xl font-bold text-blue-600 mb-2">{contactInfo.localHotline}</p>
-              <p className="text-gray-600">Direct line to Station 1 Cogon</p>
-            </div>
-          </div>
-
-          {/* Email Card */}
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
-            <div className="h-2 bg-gradient-to-r from-green-500 to-green-600"></div>
-            <div className="p-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Mail className="text-white w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Email Address</h3>
-              <a
-                href={`mailto:${contactInfo.email}`}
-                className="text-green-600 hover:text-green-700 font-semibold break-all block mb-2"
-              >
-                {contactInfo.email}
-              </a>
-              <p className="text-gray-600">For general inquiries and concerns</p>
-            </div>
-          </div>
-
-          {/* Facebook Card */}
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
-            <div className="h-2 bg-gradient-to-r from-purple-500 to-purple-600"></div>
-            <div className="p-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Facebook className="text-white w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Facebook Page</h3>
-              <a
-                href={`https://${contactInfo.facebookPage}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-600 hover:text-purple-700 font-semibold break-all block mb-2"
-              >
-                {contactInfo.facebookPage}
-              </a>
-              <p className="text-gray-600">Follow us for updates</p>
-            </div>
-          </div>
-
-          {/* Location Card - Spans 2 columns */}
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 md:col-span-2">
-            <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600"></div>
-            <div className="p-8">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <MapPin className="text-white w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">Our Location</h3>
-                  <p className="text-lg text-gray-700 mb-2">{contactInfo.location}</p>
-                  <a
-                    href={`https://www.google.com/maps/search/${encodeURIComponent(contactInfo.location)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold"
-                  >
-                    <MapPin size={16} />
-                    View on Google Maps →
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Office Hours Card */}
-          <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100">
-            <div className="h-2 bg-gradient-to-r from-teal-500 to-teal-600"></div>
-            <div className="p-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Clock className="text-white w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Office Hours</h3>
-              <p className="text-2xl font-bold text-teal-600 mb-2">{contactInfo.officeHours}</p>
-              <p className="text-gray-600">We're always ready to respond</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Fire Emergency Guide - Interactive Design */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="relative bg-gradient-to-r from-red-600 via-orange-600 to-red-600 p-8 overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full blur-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-48 h-48 bg-white rounded-full blur-3xl"></div>
-            </div>
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <AlertCircle className="text-white w-8 h-8" />
+      {/* ── 911 LIFTED CARD ── */}
+      <div className="px-4 sm:px-6 -mt-8 relative z-20 max-w-6xl mx-auto">
+        <div className="rounded-2xl overflow-hidden"
+          style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 12px 40px rgba(192,57,43,0.12)" }}>
+          <div className="h-[3px]" style={{ background: "linear-gradient(90deg, #c0392b, #e67e22, #f39c12)" }} />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 px-6 sm:px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: "rgba(192,57,43,0.09)", border: "1.5px solid rgba(192,57,43,0.2)" }}>
+                <Phone size={22} style={{ color: "#c0392b" }} />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white mb-1">Fire Emergency Guide</h2>
-                <p className="text-red-100">What to do in case of a fire emergency</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#c0392b" }}>
+                  National Emergency Hotline
+                </p>
+                <p className="font-black text-5xl leading-none mt-1"
+                  style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.06em", color: "#1c1917" }}>
+                  {contact.nationalEmergency || "911"}
+                </p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
+                  <span className="text-green-600 text-xs font-bold">Live & Monitored 24/7</span>
+                </div>
               </div>
+            </div>
+            <a href={`tel:${contact.nationalEmergency || "911"}`}
+              className="flex items-center gap-2 text-white font-black text-sm uppercase tracking-widest px-7 py-3.5 rounded-xl transition-all hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #c0392b, #ed3a0d)", boxShadow: "0 4px 16px rgba(209, 145, 16, 0.3)" }}>
+              <Phone size={15} />
+              Call {contact.nationalEmergency || "911"} Now
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── CONTACT CARDS ── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ContactCard
+            label="Local Station Hotline"
+            value={contact.localHotline}
+            href={contact.localHotline ? `tel:${contact.localHotline}` : undefined}
+            description="Direct line to Cogon Fire Station"
+            accent="#e67e22"
+            icon={<Phone size={20} />}
+          />
+          <ContactCard
+            label="Email Address"
+            value={contact.email}
+            href={contact.email ? `mailto:${contact.email}` : undefined}
+            description="For official inquiries & reports"
+            accent="#2563eb"
+            icon={<Mail size={20} />}
+          />
+          <ContactCard
+            label="Facebook Page"
+            value="BFP Station 1 Cogon"
+            href={fbHref}
+            description="Updates, alerts & announcements"
+            accent="#4f46e5"
+            icon={<Facebook size={20} />}
+          />
+
+          {/* Office Hours card */}
+          <div className="rounded-2xl p-6 h-full"
+            style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+              style={{ background: "rgba(180,83,9,0.07)", border: "1.5px solid rgba(180,83,9,0.15)" }}>
+              <Clock size={20} style={{ color: "#b45309" }} />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "#c4b5b0" }}>Office Hours</p>
+
+            {contact.officeHours.length > 0 ? (
+              <div className="space-y-2.5">
+                {contact.officeHours.map((o, i) => (
+                  <div key={i} className="flex justify-between items-center gap-2">
+                    <span className="text-xs" style={{ color: "#78716c" }}>{o.type}</span>
+                    <span className="text-xs font-bold"
+                      style={{ color: o.time === "24 / 7" ? "#16a34a" : o.time === "Closed" ? "#c0392b" : "#1c1917" }}>
+                      {o.time}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs" style={{ color: "#c4b5b0", fontStyle: "italic" }}>Hours not set</p>
+            )}
+
+            <div className="flex items-center gap-2 mt-4 pt-3" style={{ borderTop: "1px solid #f5ede9" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
+              <span className="text-green-600 text-[11px] font-semibold">Emergency line always active</span>
             </div>
           </div>
-          
-          <div className="p-8 md:p-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* If You Discover a Fire */}
-              <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-8 border-2 border-red-200">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-orange-600 rounded-xl flex items-center justify-center">
-                    <span className="text-white text-2xl">🔥</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900">If You Discover a Fire:</h3>
-                </div>
-                <ol className="space-y-4">
-                  {[
-                    'Activate the nearest fire alarm and alert others',
-                    `Call ${contactInfo.nationalEmergency} or ${contactInfo.localHotline} immediately`,
-                    'If safe to do so, use a fire extinguisher on small fires',
-                    'Evacuate the building using the nearest safe exit',
-                    'Never use elevators during a fire'
-                  ].map((step, index) => (
-                    <li key={index} className="flex items-start gap-4 group">
-                      <span className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-red-600 to-orange-600 text-white rounded-xl flex items-center justify-center font-bold shadow-lg group-hover:scale-110 transition-transform">
-                        {index + 1}
-                      </span>
-                      <span className="text-gray-700 leading-relaxed pt-2">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+        </div>
+      </section>
 
-              {/* During Evacuation */}
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border-2 border-blue-200">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center">
-                    <span className="text-white text-2xl">🚪</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900">During Evacuation:</h3>
-                </div>
-                <ol className="space-y-4">
-                  {[
-                    'Stay low to avoid smoke inhalation',
-                    'Check doors for heat before opening',
-                    'Close doors behind you to contain the fire',
-                    'Proceed to the designated assembly point',
-                    'Never re-enter the building until cleared by authorities'
-                  ].map((step, index) => (
-                    <li key={index} className="flex items-start gap-4 group">
-                      <span className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-xl flex items-center justify-center font-bold shadow-lg group-hover:scale-110 transition-transform">
-                        {index + 1}
-                      </span>
-                      <span className="text-gray-700 leading-relaxed pt-2">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
+      {/* ── LOCATION ── */}
+{/* ── LOCATION ── */}
+<section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5">
+  <div
+    className="rounded-2xl overflow-hidden"
+    style={{
+      background: "white",
+      border: "1.5px solid #f0e8e5",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+    }}
+  >
+    {/* Satellite Map */}
+    <div className="relative h-80 overflow-hidden bg-black">
+      {/* FREE Satellite Image (Esri World Imagery) */}
+      <img
+        src="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=124.6466,8.4794,124.6482,8.4808&bboxSR=4326&imageSR=4326&size=800,400&format=png&f=image"
+        alt="BFP Cogon Fire Station Satellite Map"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
 
-            {/* Important Notice */}
-            <div className="mt-8 relative overflow-hidden rounded-2xl">
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400"></div>
-              <div className="relative bg-white/90 backdrop-blur-sm p-6 m-[2px] rounded-2xl">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
-                    <AlertCircle className="text-white w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-lg mb-2">⚠️ Remember: Your safety is the top priority!</p>
-                    <p className="text-gray-700">
-                      Never risk your life to save property. Get out, stay out, and call for help.
-                      Our firefighters are trained professionals who will handle the situation.
-                    </p>
-                  </div>
-                </div>
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/10" />
+
+      {/* Location Pin */}
+      <div
+        className="absolute left-1/2 top-1/2"
+        style={{ transform: "translate(-50%, -100%)" }}
+      >
+        <div className="flex flex-col items-center">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+            style={{
+              background: "linear-gradient(135deg,#c0392b,#e67e22)",
+              boxShadow: "0 4px 12px rgba(192,57,43,0.45)",
+            }}
+          >
+            <MapPin size={18} className="text-white" />
+          </div>
+          <div className="w-0.5 h-3 bg-[#c0392b]" />
+          <div
+            className="w-4 h-2 rounded-full"
+            style={{
+              background: "rgba(0,0,0,0.35)",
+              filter: "blur(4px)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Label */}
+      <div
+        className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap"
+        style={{
+          background: "white",
+          border: "1.5px solid #f0e8e5",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        }}
+      >
+        <MapPin size={12} style={{ color: "#c0392b" }} />
+        <span
+          className="text-xs font-semibold"
+          style={{ color: "#1c1917" }}
+        >
+          BFP Cogon Fire Station
+        </span>
+      </div>
+    </div>
+
+    {/* Address + Button */}
+    <div
+      className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+      style={{ borderTop: "1.5px solid #f5ede9" }}
+    >
+      <div>
+        <p
+          className="text-[10px] font-bold uppercase tracking-widest mb-1"
+          style={{ color: "#c4b5b0" }}
+        >
+          Station Address
+        </p>
+        <p className="font-semibold text-sm" style={{ color: "#1c1917" }}>
+          {contact.location || "Cogon Fire Station, Cagayan de Oro City"}
+        </p>
+      </div>
+
+      <a
+        href={mapsUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center gap-2 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all hover:scale-105 shrink-0"
+        style={{
+          background: "linear-gradient(135deg,#c0392b,#e67e22)",
+          boxShadow: "0 3px 10px rgba(237, 29, 6, 0.25)",
+        }}
+      >
+        <ExternalLink size={13} /> Open in Google Maps
+      </a>
+    </div>
+  </div>
+</section>
+
+      {/* ── BARANGAYS ── */}
+      {contact.barangays.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5">
+          <div className="rounded-2xl p-6 sm:p-8"
+            style={{ background:"white", border:"1.5px solid #f0e8e5", boxShadow:"0 2px 8px rgba(0,0,0,0.04)" }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color:"#c0392b" }}>Coverage Area</p>
+                <h2 className="font-black leading-none"
+                  style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"1.8rem", letterSpacing:"0.05em", color:"#1c1917" }}>
+                  Barangays Under Jurisdiction
+                </h2>
               </div>
+              <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl"
+                style={{ background:"rgba(192,57,43,0.08)", border:"1.5px solid rgba(192,57,43,0.18)", color:"#c0392b" }}>
+                <Shield size={14} />
+                {contact.barangays.length} Barangays
+              </span>
             </div>
+            <div className="flex flex-wrap gap-2 text-[10px]">
+              {contact.barangays.map((b, i) => <BarangayChip key={i} name={b} />)}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── SAFETY NOTICE ── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5 pb-16">
+        <div className="flex items-start gap-4 p-5 rounded-2xl"
+          style={{ background:"rgba(217,119,6,0.05)", border:"1.5px solid rgba(217,119,6,0.2)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+            style={{ background:"rgba(217,119,6,0.1)", border:"1.5px solid rgba(217,119,6,0.2)" }}>
+            <AlertTriangle size={18} style={{ color:"#d97706" }} />
+          </div>
+          <div>
+            <p className="font-bold text-sm mb-1" style={{ color:"#92400e" }}>Safety Reminder</p>
+            <p className="text-sm leading-relaxed" style={{ color:"#78716c" }}>
+              <strong style={{ color:"#44403c" }}>Never risk your life to save property.</strong>{" "}
+              In a fire emergency, evacuate all persons immediately and call 911. Do not re-enter a burning building. Leave firefighting to trained BFP personnel.
+            </p>
           </div>
         </div>
       </section>
     </div>
   );
 }
+
+export default ContactPage;

@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, X, UploadCloud } from 'lucide-react';
+import { Plus, Edit, Trash2, X, UploadCloud, FileText, Calendar, Tag } from 'lucide-react';
 import { CATEGORY_OPTIONS } from '../../utils/types';
 import { getWeeklyReports, saveWeeklyReports } from '../../utils/storage';
 import { toast } from 'sonner';
+
+const CATEGORY_STYLES = {
+  Event:       { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  Training:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  Advisory:    { dot: 'bg-amber-500',   badge: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  Achievement: { dot: 'bg-violet-500',  badge: 'bg-violet-50 text-violet-700 border border-violet-200' },
+};
+const getCategoryStyle = (cat) => CATEGORY_STYLES[cat] || { dot: 'bg-stone-400', badge: 'bg-stone-100 text-stone-600 border border-stone-200' };
 
 export function WeeklyReportsManager() {
   const [reports, setReports] = useState([]);
@@ -13,220 +21,247 @@ export function WeeklyReportsManager() {
     title: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
-    category: 'Event'
+    category: 'Event',
   });
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const loadReports = () => {
-    setReports(getWeeklyReports());
-  };
+  useEffect(() => { loadReports(); }, []);
+  const loadReports = () => setReports(getWeeklyReports());
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.coverImage) {
-      toast.error('Please upload a cover image!');
-      return;
-    }
-
+    if (!formData.coverImage) { toast.error('Please upload a cover image!'); return; }
     if (editingReport) {
-      const updated = reports.map(r => 
-        r.id === editingReport.id ? { ...formData, id: editingReport.id } : r
-      );
-      saveWeeklyReports(updated);
-      setReports(updated);
-      toast.success('Report updated successfully!');
+      const updated = reports.map(r => r.id === editingReport.id ? { ...formData, id: editingReport.id } : r);
+      saveWeeklyReports(updated); setReports(updated); toast.success('Report updated successfully!');
     } else {
-      const newReport = {
-        ...formData,
-        id: Date.now().toString()
-      };
+      const newReport = { ...formData, id: Date.now().toString() };
       const updated = [...reports, newReport];
-      saveWeeklyReports(updated);
-      setReports(updated);
-      toast.success('Report added successfully!');
+      saveWeeklyReports(updated); setReports(updated); toast.success('Report added successfully!');
     }
-
     resetForm();
   };
 
   const handleEdit = (report) => {
     setEditingReport(report);
-    setFormData({
-      coverImage: report.coverImage,
-      title: report.title,
-      description: report.description,
-      date: report.date,
-      category: report.category
-    });
+    setFormData({ coverImage: report.coverImage, title: report.title, description: report.description, date: report.date, category: report.category });
     setIsFormOpen(true);
   };
 
   const handleDelete = (id) => {
     if (confirm('Are you sure you want to delete this report?')) {
       const updated = reports.filter(r => r.id !== id);
-      saveWeeklyReports(updated);
-      setReports(updated);
-      toast.success('Report deleted successfully!');
+      saveWeeklyReports(updated); setReports(updated); toast.success('Report deleted successfully!');
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      coverImage: '',
-      title: '',
-      description: '',
-      date: new Date().toISOString().split('T')[0],
-      category: 'Event'
-    });
-    setEditingReport(null);
-    setIsFormOpen(false);
-  };
-
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case 'Event': return 'bg-blue-100 text-blue-800';
-      case 'Training': return 'bg-green-100 text-green-800';
-      case 'Advisory': return 'bg-yellow-100 text-yellow-800';
-      case 'Achievement': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    setFormData({ coverImage: '', title: '', description: '', date: new Date().toISOString().split('T')[0], category: 'Event' });
+    setEditingReport(null); setIsFormOpen(false);
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      setFormData({ ...formData, coverImage: reader.result });
-    };
+    reader.onload = () => setFormData(p => ({ ...p, coverImage: reader.result }));
     reader.readAsDataURL(file);
   };
 
+  const inputClass = {
+    background: 'white',
+    border: '1.5px solid #e8ddd8',
+    borderRadius: '10px',
+    padding: '10px 14px',
+    fontSize: '13px',
+    color: '#1c1917',
+    outline: 'none',
+    width: '100%',
+    transition: 'border-color 0.2s',
+  };
+
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Weekly Reports Management</h2>
+    <div className="px-4 sm:px-6 lg:px-8 py-8" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        * { box-sizing: border-box; }
+        .report-card {
+          background: white;
+          border: 1.5px solid #f0e8e5;
+          border-radius: 16px;
+          overflow: hidden;
+          transition: all 0.22s ease;
+          display: flex;
+          flex-direction: column;
+        }
+        .report-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 40px rgba(192,57,43,0.1);
+          border-color: #e8c4bc;
+        }
+        .modal-input:focus { border-color: #c0392b !important; box-shadow: 0 0 0 3px rgba(192,57,43,0.08); }
+        .label-style {
+          display: block;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.16em;
+          color: #a8a29e;
+          margin-bottom: 6px;
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: '#c0392b' }}>Content Management</p>
+          <h2 className="font-black leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917' }}>
+            Weekly Reports
+          </h2>
+          <p className="text-sm mt-1" style={{ color: '#78716c' }}>
+            {reports.length} report{reports.length !== 1 ? 's' : ''} published
+          </p>
+        </div>
         <button
           onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all text-white shadow-md"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)' }}
         >
-          <Plus size={20} />
-          Add Report
+          <Plus size={15} /> Add Report
         </button>
       </div>
 
-      {/* Reports Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reports.map((report) => (
-          <div key={report.id} className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
-            <div className="relative h-48">
-              <img
-                src={report.coverImage}
-                alt={report.title}
-                className="w-full h-full object-cover"
-              />
-              <span className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-semibold ${getCategoryColor(report.category)}`}>
-                {report.category}
-              </span>
-            </div>
-            <div className="p-4">
-              <h3 className="font-bold text-lg text-gray-900 mb-2">{report.title}</h3>
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{report.description}</p>
-              <p className="text-xs text-gray-500 mb-4">
-                {new Date(report.date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(report)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors"
-                >
-                  <Edit size={16} />
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(report.id)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors"
-                >
-                  <Trash2 size={16} />
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
+      {/* Empty state */}
       {reports.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No weekly reports yet. Add your first report!</p>
+        <div className="flex flex-col items-center justify-center py-20 rounded-2xl"
+          style={{ background: 'white', border: '1.5px dashed #f0d8d3' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'rgba(192,57,43,0.06)', border: '1.5px dashed rgba(192,57,43,0.2)' }}>
+            <FileText size={22} style={{ color: '#d4b8b3' }} />
+          </div>
+          <p className="font-semibold text-sm" style={{ color: '#a8a29e' }}>No reports yet</p>
+          <p className="text-xs mt-1" style={{ color: '#c4b5b0' }}>Click "Add Report" to publish your first update</p>
         </div>
       )}
 
-      {/* Form Modal */}
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {reports.map((report) => {
+          const s = getCategoryStyle(report.category);
+          return (
+            <div key={report.id} className="report-card">
+              {/* Image */}
+              <div className="relative h-48 overflow-hidden shrink-0" style={{ background: '#f5f0ed' }}>
+                <img src={report.coverImage} alt={report.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,25,23,0.4) 0%, transparent 55%)' }} />
+                <span className={`absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide ${s.badge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{report.category}
+                </span>
+                <span className="absolute bottom-3 right-3 flex items-center gap-1 text-xs text-white/90 font-semibold bg-black/30 px-2 py-1 rounded-lg backdrop-blur-sm">
+                  <Calendar size={11} />
+                  {new Date(report.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="font-bold text-sm leading-snug mb-2 line-clamp-2" style={{ color: '#1c1917' }}>{report.title}</h3>
+                <p className="text-xs leading-relaxed line-clamp-3 flex-1" style={{ color: '#78716c' }}>{report.description}</p>
+                <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: '1px solid #f5ede9' }}>
+                  <button
+                    onClick={() => handleEdit(report)}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all duration-200"
+                    style={{ background: 'rgba(59,130,246,0.06)', border: '1.5px solid rgba(59,130,246,0.15)', color: '#2563eb' }}
+                  >
+                    <Edit size={12} /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(report.id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all duration-200"
+                    style={{ background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b' }}
+                  >
+                    <Trash2 size={12} /> Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal */}
       {isFormOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-lg">
-            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-              <h3 className="text-xl font-bold text-gray-900">
-                {editingReport ? 'Edit Weekly Report' : 'Add New Weekly Report'}
-              </h3>
-              <button onClick={resetForm} className="text-gray-500 hover:text-gray-700">
-                <X size={24} />
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{ background: 'rgba(28,25,23,0.6)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl"
+            style={{ background: 'white', border: '1.5px solid #f0e8e5' }}>
+
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 z-10"
+              style={{ borderBottom: '1.5px solid #f5ede9' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)' }}>
+                  <FileText size={15} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#c0392b' }}>
+                    {editingReport ? 'Editing Report' : 'New Report'}
+                  </p>
+                  <h3 className="font-bold text-sm" style={{ color: '#1c1917' }}>
+                    {editingReport ? 'Update Weekly Report' : 'Add Weekly Report'}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={resetForm}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}
+              >
+                <X size={15} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* File Upload */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Cover Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cover Image
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-red-600 file:text-white file:font-semibold hover:file:bg-red-700 cursor-pointer"
-                  />
+                <label className="label-style">Cover Image</label>
+                <div className="flex gap-3 items-start">
+                  <label className="flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4 cursor-pointer rounded-xl transition-all"
+                    style={{ background: '#fdf9f8', border: '1.5px dashed #e8d8d3' }}>
+                    <UploadCloud size={20} style={{ color: '#c4b5b0' }} />
+                    <span className="text-xs font-semibold" style={{ color: '#a8a29e' }}>Click to upload image</span>
+                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                  </label>
                   {formData.coverImage && (
-                    <img
-                      src={formData.coverImage}
-                      alt="Preview"
-                      className="w-20 h-20 object-cover rounded-lg shadow"
-                    />
+                    <img src={formData.coverImage} alt="Preview" className="w-24 h-24 rounded-xl object-cover shrink-0"
+                      style={{ border: '1.5px solid #ede8e5' }} />
                   )}
                 </div>
               </div>
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <label className="label-style">Title</label>
                 <input
                   type="text"
+                  className="modal-input"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                  placeholder="Title"
+                  onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))}
+                  style={inputClass}
+                  placeholder="e.g. Fire Prevention Month Campaign"
                   required
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="label-style">Description</label>
                 <textarea
+                  className="modal-input"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                  placeholder="Brief description of the activity..."
+                  onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
+                  style={{ ...inputClass, resize: 'none' }}
+                  placeholder="Brief description of the activity or event..."
                   rows={4}
                   required
                 />
@@ -235,44 +270,44 @@ export function WeeklyReportsManager() {
               {/* Date & Category */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <label className="label-style">Date</label>
                   <input
                     type="date"
+                    className="modal-input"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    onChange={(e) => setFormData(p => ({ ...p, date: e.target.value }))}
+                    style={inputClass}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <label className="label-style">Category</label>
                   <select
+                    className="modal-input"
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    onChange={(e) => setFormData(p => ({ ...p, category: e.target.value }))}
+                    style={inputClass}
                     required
                   >
-                    {CATEGORY_OPTIONS.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
+                    {CATEGORY_OPTIONS.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* Form Buttons */}
-              <div className="flex gap-3 pt-4">
+              {/* Buttons */}
+              <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors"
+                  className="flex-1 text-white font-bold py-3 rounded-xl text-sm transition-all"
+                  style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.25)' }}
                 >
-                  {editingReport ? 'Update Report' : 'Add Report'}
+                  {editingReport ? 'Update Report' : 'Publish Report'}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition-colors"
+                  className="flex-1 font-bold py-3 rounded-xl text-sm transition-all"
+                  style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}
                 >
                   Cancel
                 </button>

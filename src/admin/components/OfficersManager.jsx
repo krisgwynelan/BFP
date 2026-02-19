@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit, Trash2, X, UploadCloud } from 'lucide-react';
+import { Plus, Edit, Trash2, X, UploadCloud, Users, Phone, CreditCard, Shield, Search } from 'lucide-react';
 import { RANK_OPTIONS, RANK_ABBREVIATIONS } from '../../utils/types';
 import { getOfficers, saveOfficers } from '../../utils/storage';
 import { toast } from 'sonner';
@@ -14,52 +14,35 @@ export function OfficersManager() {
     rank: 'Fire Officer I',
     roleAssignment: '',
     contactNumber: '',
-    accountNumber: ''
+    accountNumber: '',
   });
 
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    loadOfficers();
-  }, []);
-
-  const loadOfficers = () => {
-    setOfficers(getOfficers());
-  };
+  useEffect(() => { loadOfficers(); }, []);
+  const loadOfficers = () => setOfficers(getOfficers());
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (editingOfficer) {
-      const updated = officers.map(o =>
-        o.id === editingOfficer.id ? { ...formData, id: editingOfficer.id } : o
-      );
-      saveOfficers(updated);
-      setOfficers(updated);
-      toast.success('Officer updated successfully!');
+      const updated = officers.map(o => o.id === editingOfficer.id ? { ...formData, id: editingOfficer.id } : o);
+      saveOfficers(updated); setOfficers(updated); toast.success('Officer updated successfully!');
     } else {
       const newOfficer = { ...formData, id: Date.now().toString() };
       const updated = [...officers, newOfficer];
-      saveOfficers(updated);
-      setOfficers(updated);
-      toast.success('Officer added successfully!');
+      saveOfficers(updated); setOfficers(updated); toast.success('Officer added successfully!');
     }
-
     resetForm();
   };
 
   const handleEdit = (officer) => {
-    setEditingOfficer(officer);
-    setFormData({ ...officer });
-    setIsFormOpen(true);
+    setEditingOfficer(officer); setFormData({ ...officer }); setIsFormOpen(true);
   };
 
   const handleDelete = (id) => {
     if (confirm('Are you sure you want to delete this officer?')) {
       const updated = officers.filter(o => o.id !== id);
-      saveOfficers(updated);
-      setOfficers(updated);
-      toast.success('Officer deleted successfully!');
+      saveOfficers(updated); setOfficers(updated); toast.success('Officer deleted successfully!');
     }
   };
 
@@ -67,142 +50,260 @@ export function OfficersManager() {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData({ ...formData, profileImage: event.target.result });
-      };
+      reader.onload = (event) => setFormData(p => ({ ...p, profileImage: event.target.result }));
       reader.readAsDataURL(file);
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      profileImage: '',
-      fullName: '',
-      rank: 'Fire Officer I',
-      roleAssignment: '',
-      contactNumber: '',
-      accountNumber: ''
-    });
-    setEditingOfficer(null);
-    setIsFormOpen(false);
+    setFormData({ profileImage: '', fullName: '', rank: 'Fire Officer I', roleAssignment: '', contactNumber: '', accountNumber: '' });
+    setEditingOfficer(null); setIsFormOpen(false);
+  };
+
+  const AvatarFallback = ({ name }) => {
+    const initials = name?.split(' ').map(n => n[0]).slice(0, 2).join('') || '?';
+    return (
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm"
+        style={{ background: 'linear-gradient(135deg, rgba(192,57,43,0.12), rgba(230,126,34,0.12))', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b' }}>
+        {initials}
+      </div>
+    );
+  };
+
+  const inputStyle = {
+    width: '100%',
+    background: 'white',
+    border: '1.5px solid #e8ddd8',
+    borderRadius: '10px',
+    padding: '10px 14px',
+    fontSize: '13px',
+    color: '#1c1917',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Officers Management</h2>
+    <div className="px-4 sm:px-6 lg:px-8 py-8" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f5f0ed; }
+        ::-webkit-scrollbar-thumb { background: #e2c4b8; border-radius: 4px; }
+        .officer-row { transition: background 0.15s; }
+        .officer-row:hover { background: rgba(192,57,43,0.025); }
+        .modal-inp:focus { border-color: #c0392b !important; box-shadow: 0 0 0 3px rgba(192,57,43,0.08) !important; }
+        .action-btn-edit { background: rgba(59,130,246,0.06); border: 1.5px solid rgba(59,130,246,0.2); color: #2563eb; }
+        .action-btn-edit:hover { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.35); }
+        .action-btn-del { background: rgba(192,57,43,0.05); border: 1.5px solid rgba(192,57,43,0.18); color: #c0392b; }
+        .action-btn-del:hover { background: rgba(192,57,43,0.1); border-color: rgba(192,57,43,0.35); }
+      `}</style>
+
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: '#c0392b' }}>Personnel Management</p>
+          <h2 className="font-black leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917' }}>
+            Officers
+          </h2>
+          <p className="text-sm mt-1" style={{ color: '#78716c' }}>
+            {officers.length} officer{officers.length !== 1 ? 's' : ''} on record
+          </p>
+        </div>
         <button
           onClick={() => setIsFormOpen(true)}
-          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl text-white transition-all"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)' }}
         >
-          <Plus size={20} /> Add Officer
+          <Plus size={15} /> Add Officer
         </button>
       </div>
 
-      {/* Officers Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Officer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role/Assignment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {officers.map((officer) => (
-                <tr key={officer.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap flex items-center gap-3">
-                    <img src={officer.profileImage} alt={officer.fullName} className="w-10 h-10 rounded-full object-cover" />
-                    <div className="font-medium text-gray-900">{officer.fullName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">
-                      {RANK_ABBREVIATIONS[officer.rank]}
-                    </span>
-                    <div className="text-xs text-gray-500 mt-1">{officer.rank}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{officer.roleAssignment}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{officer.contactNumber}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{officer.accountNumber}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-3">
-                    <button onClick={() => handleEdit(officer)} className="text-blue-600 hover:text-blue-900"><Edit size={18} /></button>
-                    <button onClick={() => handleDelete(officer.id)} className="text-red-600 hover:text-red-900"><Trash2 size={18} /></button>
-                  </td>
+      {/* Table container */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'white', border: '1.5px solid #f0e8e5', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+        {officers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{ background: 'rgba(192,57,43,0.06)', border: '1.5px dashed rgba(192,57,43,0.2)' }}>
+              <Users size={24} style={{ color: '#d4b8b3' }} />
+            </div>
+            <p className="font-semibold text-sm" style={{ color: '#a8a29e' }}>No officers registered</p>
+            <p className="text-xs mt-1" style={{ color: '#c4b5b0' }}>Click "Add Officer" to add the first record</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[780px]">
+              <thead>
+                <tr style={{ borderBottom: '1.5px solid #f5ede9', background: '#fdf9f8' }}>
+                  {['Officer', 'Rank', 'Role / Assignment', 'Contact', 'Account No.', 'Actions'].map((h, i) => (
+                    <th key={i}
+                      className={`px-5 py-3.5 text-[10px] font-bold uppercase tracking-widest ${i === 5 ? 'text-right' : 'text-left'}`}
+                      style={{ color: '#a8a29e' }}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {officers.map((officer, idx) => (
+                  <tr key={officer.id} className="officer-row"
+                    style={{ borderBottom: idx !== officers.length - 1 ? '1px solid #faf5f3' : 'none' }}>
+                    {/* Officer */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        {officer.profileImage ? (
+                          <img src={officer.profileImage} alt={officer.fullName}
+                            className="w-10 h-10 rounded-xl object-cover shrink-0"
+                            style={{ border: '1.5px solid #f0e8e5' }} />
+                        ) : (
+                          <AvatarFallback name={officer.fullName} />
+                        )}
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: '#1c1917' }}>{officer.fullName}</p>
+                          <p className="text-xs mt-0.5" style={{ color: '#a8a29e' }}>{RANK_ABBREVIATIONS[officer.rank]}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Rank */}
+                    <td className="px-5 py-4">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg"
+                        style={{ background: 'rgba(192,57,43,0.07)', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b' }}>
+                        <Shield size={9} />{RANK_ABBREVIATIONS[officer.rank]}
+                      </span>
+                      <p className="text-[11px] mt-1" style={{ color: '#c4b5b0' }}>{officer.rank}</p>
+                    </td>
+
+                    {/* Role */}
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-medium" style={{ color: '#44403c' }}>{officer.roleAssignment}</span>
+                    </td>
+
+                    {/* Contact */}
+                    <td className="px-5 py-4">
+                      <span className="flex items-center gap-1.5 text-sm" style={{ color: '#57534e' }}>
+                        <Phone size={12} style={{ color: '#c4b5b0' }} />{officer.contactNumber}
+                      </span>
+                    </td>
+
+                    {/* Account */}
+                    <td className="px-5 py-4">
+                      <span className="flex items-center gap-1.5 text-xs font-mono" style={{ color: '#78716c' }}>
+                        <CreditCard size={11} style={{ color: '#d1c4be' }} />{officer.accountNumber}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(officer)}
+                          className="action-btn-edit flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200"
+                        >
+                          <Edit size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(officer.id)}
+                          className="action-btn-del flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200"
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Form Modal */}
+      {/* Modal */}
       {isFormOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-lg">
-            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-              <h3 className="text-xl font-bold text-gray-900">{editingOfficer ? 'Edit Officer' : 'Add New Officer'}</h3>
-              <button onClick={resetForm} className="text-gray-500 hover:text-gray-700"><X size={24} /></button>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{ background: 'rgba(28,25,23,0.55)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl"
+            style={{ background: 'white', border: '1.5px solid #f0e8e5' }}>
+
+            {/* Modal header */}
+            <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 z-10"
+              style={{ borderBottom: '1.5px solid #f5ede9' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)' }}>
+                  <Users size={15} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#c0392b' }}>
+                    {editingOfficer ? 'Editing Officer' : 'New Officer'}
+                  </p>
+                  <h3 className="font-bold text-sm" style={{ color: '#1c1917' }}>
+                    {editingOfficer ? 'Update Officer Record' : 'Add New Officer'}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={resetForm}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}
+              >
+                <X size={15} />
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Image Upload */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Profile Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Profile Image</label>
-                {formData.profileImage && (
-                  <img src={formData.profileImage} alt="Preview" className="w-24 h-24 rounded-full object-cover mb-2 border" />
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    value={formData.profileImage}
-                    onChange={(e) => setFormData({ ...formData, profileImage: e.target.value })}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current.click()}
-                    className="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    <UploadCloud size={16} /> Upload
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/*"
-                  />
+                <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>
+                  Profile Image
+                </label>
+                <div className="flex gap-3 items-center">
+                  {formData.profileImage ? (
+                    <img src={formData.profileImage} alt="Preview"
+                      className="w-16 h-16 rounded-xl object-cover shrink-0"
+                      style={{ border: '1.5px solid #ede8e5' }} />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: '#f5f0ed', border: '1.5px dashed #e8d8d3' }}>
+                      <Users size={22} style={{ color: '#d4b8b3' }} />
+                    </div>
+                  )}
+                  <div className="flex-1 flex gap-2">
+                    <input
+                      type="url"
+                      placeholder="Paste image URL..."
+                      value={formData.profileImage}
+                      onChange={(e) => setFormData(p => ({ ...p, profileImage: e.target.value }))}
+                      className="modal-inp flex-1 min-w-0"
+                      style={{ ...inputStyle, flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current.click()}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl shrink-0 transition-all"
+                      style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}
+                    >
+                      <UploadCloud size={14} /> Upload
+                    </button>
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                  </div>
                 </div>
               </div>
 
-              {/* Other Fields */}
+              {/* Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                    placeholder="Juan Dela Cruz"
-                    required
-                  />
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>Full Name</label>
+                  <input type="text" className="modal-inp" value={formData.fullName}
+                    onChange={(e) => setFormData(p => ({ ...p, fullName: e.target.value }))}
+                    style={inputStyle} placeholder="e.g. Juan M. Dela Cruz" required />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Rank</label>
-                  <select
-                    value={formData.rank}
-                    onChange={(e) => setFormData({ ...formData, rank: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                    required
-                  >
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>Rank</label>
+                  <select className="modal-inp" value={formData.rank}
+                    onChange={(e) => setFormData(p => ({ ...p, rank: e.target.value }))}
+                    style={inputStyle} required>
                     {RANK_OPTIONS.map(rank => (
                       <option key={rank} value={rank}>{rank} ({RANK_ABBREVIATIONS[rank]})</option>
                     ))}
@@ -210,48 +311,37 @@ export function OfficersManager() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Role/Assignment</label>
-                  <input
-                    type="text"
-                    value={formData.roleAssignment}
-                    onChange={(e) => setFormData({ ...formData, roleAssignment: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                    placeholder="Station Commander"
-                    required
-                  />
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>Role / Assignment</label>
+                  <input type="text" className="modal-inp" value={formData.roleAssignment}
+                    onChange={(e) => setFormData(p => ({ ...p, roleAssignment: e.target.value }))}
+                    style={inputStyle} placeholder="e.g. Station Commander" required />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                  <input
-                    type="tel"
-                    value={formData.contactNumber}
-                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                    placeholder="+63 912 345 6789"
-                    required
-                  />
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>Contact Number</label>
+                  <input type="tel" className="modal-inp" value={formData.contactNumber}
+                    onChange={(e) => setFormData(p => ({ ...p, contactNumber: e.target.value }))}
+                    style={inputStyle} placeholder="+63 912 345 6789" required />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
-                  <input
-                    type="text"
-                    value={formData.accountNumber}
-                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
-                    placeholder="BFP-CDO-001"
-                    required
-                  />
+                  <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>Account Number</label>
+                  <input type="text" className="modal-inp" value={formData.accountNumber}
+                    onChange={(e) => setFormData(p => ({ ...p, accountNumber: e.target.value }))}
+                    style={inputStyle} placeholder="BFP-CDO-001" required />
                 </div>
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button type="submit" className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors">
+              <div className="flex gap-3 pt-2">
+                <button type="submit"
+                  className="flex-1 text-white font-bold py-3 rounded-xl text-sm transition-all"
+                  style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.25)' }}>
                   {editingOfficer ? 'Update Officer' : 'Add Officer'}
                 </button>
-                <button type="button" onClick={resetForm} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 rounded-lg transition-colors">
+                <button type="button" onClick={resetForm}
+                  className="flex-1 font-bold py-3 rounded-xl text-sm transition-all"
+                  style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}>
                   Cancel
                 </button>
               </div>

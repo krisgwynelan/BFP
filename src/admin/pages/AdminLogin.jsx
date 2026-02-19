@@ -6,9 +6,11 @@ import { toast } from "sonner";
 // PUBLIC images
 import bgFire from "/Fire.jpg";
 import Logo from "/BFP.jpg";
+import { Eye, EyeOff } from "lucide-react";
 
 export function AdminLogin() {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
@@ -37,40 +39,46 @@ export function AdminLogin() {
 
       {/* ===== CONTENT ===== */}
       <div className="relative z-10 w-full max-w-md">
-        {/* ===== TOP LOGO (CLEAR, NO BLUR) ===== */}
+        {/* ===== TOP LOGO ===== */}
         <div className="text-center mb-8">
           <div className="w-36 h-36 bg-white rounded-full flex items-center justify-center mx-auto border border-white/40 shadow-lg p-3">
-  <img
-    src={Logo}
-    alt="BFP Logo"
-    className="w-32 h-32 object-cover rounded-full scale-110"
-  />
-</div>
-
+            <img
+              src={Logo}
+              alt="BFP Logo"
+              className="w-32 h-32 object-cover rounded-full scale-110"
+            />
+          </div>
         </div>
 
         {/* ===== GLASS LOGIN CARD ===== */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8">
           {/* TEXT */}
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-white">
-              Admin Portal
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Admin Portal</h1>
             <p className="text-orange-200 text-sm mt-1">
               BFP Station 1 Cogon – Management System
             </p>
           </div>
 
           {/* FORM */}
-          <form onSubmit={handleLogin} className="space-y-6">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
-              className="w-full px-4 py-3 rounded-lg bg-white/80 focus:bg-white outline-none text-gray-900 placeholder-gray-500"
-              required
-            />
+          <form onSubmit={handleLogin} className="space-y-6 relative">
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter admin password"
+                className="w-full px-4 py-3 rounded-lg bg-white/80 focus:bg-white outline-none text-gray-900 placeholder-gray-500"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-gray-900"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
             <button
               type="submit"
