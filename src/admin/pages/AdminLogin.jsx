@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { getAdminPassword } from "../../utils/storage";
 import { toast } from "sonner";
 
 // PUBLIC images
 import bgFire from "/Fire.jpg";
 import Logo from "/BFP.jpg";
 import { Eye, EyeOff } from "lucide-react";
+
+// Default admin password — change this to whatever you want
+const DEFAULT_ADMIN_PASSWORD = "admin123";
+
+// We store a custom password in localStorage so it persists across sessions
+// without needing Firebase read permissions
+const getStoredPassword = () => {
+  return localStorage.getItem("bfp_admin_password") || DEFAULT_ADMIN_PASSWORD;
+};
 
 export function AdminLogin() {
   const [password, setPassword] = useState("");
@@ -15,7 +23,7 @@ export function AdminLogin() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const adminPassword = getAdminPassword();
+    const adminPassword = getStoredPassword();
 
     if (password === adminPassword) {
       sessionStorage.setItem("admin_logged_in", "true");

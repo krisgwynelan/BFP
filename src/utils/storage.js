@@ -1,96 +1,89 @@
-const STORAGE_KEYS = {
-  OFFICERS: "bfp_officers",
-  WEEKLY_REPORTS: "bfp_weekly_reports",
-  CONTACT_INFO: "bfp_contact_info",
-  ADMIN_PASSWORD: "bfp_admin_password",
+// src/utils/storage.js
+import { db } from "../firebase";
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  getDoc,
+  deleteDoc
+} from "firebase/firestore";
+
+/* ================= OFFICERS ================= */
+
+const officersCol = collection(db, "officers");
+
+export const getOfficers = async () => {
+  const snapshot = await getDocs(officersCol);
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+  }));
 };
 
-/* ================= EMPTY DEFAULTS ================= */
-
-const DEFAULT_CONTACT_INFO = {
-  id: "1",
-  
-  nationalEmergency: "",
-  localHotline: "",
-  email: "",
-  facebookPage: "",
-  location: "",
-  officeHours: [],
-  barangays: [],
+export const saveOfficer = async (id, officerData) => {
+  await setDoc(doc(db, "officers", id), officerData, { merge: true });
 };
 
-const DEFAULT_WEEKLY_REPORTS = []; // ✅ EMPTY (NO FIXED DATA)
-const DEFAULT_OFFICERS = [];       // ✅ EMPTY (SAFE)
-
-/* ================= CONTACT ================= */
-
-export const getContactInfo = () => {
-  const stored = localStorage.getItem(STORAGE_KEYS.CONTACT_INFO);
-  if (!stored) {
-    localStorage.setItem(
-      STORAGE_KEYS.CONTACT_INFO,
-      JSON.stringify(DEFAULT_CONTACT_INFO)
-    );
-    return DEFAULT_CONTACT_INFO;
-  }
-  return JSON.parse(stored);
-};
-
-export const saveContactInfo = (contactInfo) => {
-  localStorage.setItem(
-    STORAGE_KEYS.CONTACT_INFO,
-    JSON.stringify(contactInfo)
-  );
+export const deleteOfficer = async (id) => {
+  await deleteDoc(doc(db, "officers", id));
 };
 
 /* ================= WEEKLY REPORTS ================= */
 
-export const getWeeklyReports = () => {
-  const stored = localStorage.getItem(STORAGE_KEYS.WEEKLY_REPORTS);
-  if (!stored) {
-    localStorage.setItem(
-      STORAGE_KEYS.WEEKLY_REPORTS,
-      JSON.stringify(DEFAULT_WEEKLY_REPORTS)
-    );
-    return DEFAULT_WEEKLY_REPORTS;
+const reportsCol = collection(db, "weeklyReports");
+
+export const getWeeklyReports = async () => {
+  const snapshot = await getDocs(reportsCol);
+  return snapshot.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+  }));
+};
+
+export const saveWeeklyReport = async (id, reportData) => {
+  await setDoc(doc(db, "weeklyReports", id), reportData, { merge: true });
+};
+
+export const deleteWeeklyReport = async (id) => {
+  await deleteDoc(doc(db, "weeklyReports", id));
+};
+
+/* ================= CONTACT INFO ================= */
+
+const contactDoc = doc(db, "settings", "contact");
+
+export const getContactInfo = async () => {
+  const snapshot = await getDoc(contactDoc);
+  if (!snapshot.exists()) {
+    const empty = {
+      nationalEmergency: "",
+      localHotline: "",
+      email: "",
+      facebookPage: "",
+      location: "",
+      officeHours: [],
+      barangays: [],
+    };
+    await setDoc(contactDoc, empty);
+    return empty;
   }
-  return JSON.parse(stored);
+  return snapshot.data();
 };
 
-export const saveWeeklyReports = (reports) => {
-  localStorage.setItem(
-    STORAGE_KEYS.WEEKLY_REPORTS,
-    JSON.stringify(reports)
-  );
-};
-
-/* ================= OFFICERS ================= */
-
-export const getOfficers = () => {
-  const stored = localStorage.getItem(STORAGE_KEYS.OFFICERS);
-  if (!stored) {
-    localStorage.setItem(
-      STORAGE_KEYS.OFFICERS,
-      JSON.stringify(DEFAULT_OFFICERS)
-    );
-    return DEFAULT_OFFICERS;
-  }
-  return JSON.parse(stored);
-};
-
-export const saveOfficers = (officers) => {
-  localStorage.setItem(
-    STORAGE_KEYS.OFFICERS,
-    JSON.stringify(officers)
-  );
+export const saveContactInfo = async (data) => {
+  await setDoc(contactDoc, data, { merge: true });
 };
 
 /* ================= ADMIN PASSWORD ================= */
 
-export const getAdminPassword = () => {
-  return localStorage.getItem(STORAGE_KEYS.ADMIN_PASSWORD) || "admin123";
+const adminPassDoc = doc(db, "settings", "adminPassword");
+
+export const getAdminPassword = async () => {
+  const snapshot = await getDoc(adminPassDoc);
+  return snapshot.exists() ? snapshot.data().password : "admin123";
 };
 
-export const setAdminPassword = (password) => {
-  localStorage.setItem(STORAGE_KEYS.ADMIN_PASSWORD, password);
+export const setAdminPassword = async (password) => {
+  await setDoc(adminPassDoc, { password });
 };

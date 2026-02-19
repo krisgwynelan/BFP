@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, X, UploadCloud, FileText, Calendar, Tag } from 'lucide-react';
 import { CATEGORY_OPTIONS } from '../../utils/types';
-import { getWeeklyReports, saveWeeklyReports } from '../../utils/storage';
+import { getWeeklyReports, saveWeeklyReport, deleteWeeklyReport } from '../../utils/storage';
 import { toast } from 'sonner';
 
 const CATEGORY_STYLES = {
@@ -14,6 +14,8 @@ const getCategoryStyle = (cat) => CATEGORY_STYLES[cat] || { dot: 'bg-stone-400',
 
 export function WeeklyReportsManager() {
   const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
   const [formData, setFormData] = useState({
@@ -25,38 +27,79 @@ export function WeeklyReportsManager() {
   });
 
   useEffect(() => { loadReports(); }, []);
-  const loadReports = () => setReports(getWeeklyReports());
 
-  const handleSubmit = (e) => {
+  const loadReports = async () => {
+    setLoading(true);
+    try {
+      const data = await getWeeklyReports();
+      // Sort by date descending
+      const sorted = data.sort((a, b) => {
+        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+        return dateB - dateA;
+      });
+      setReports(sorted);
+    } catch (err) {
+      toast.error('Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.coverImage) { toast.error('Please upload a cover image!'); return; }
-    if (editingReport) {
-      const updated = reports.map(r => r.id === editingReport.id ? { ...formData, id: editingReport.id } : r);
-      saveWeeklyReports(updated); setReports(updated); toast.success('Report updated successfully!');
-    } else {
-      const newReport = { ...formData, id: Date.now().toString() };
-      const updated = [...reports, newReport];
-      saveWeeklyReports(updated); setReports(updated); toast.success('Report added successfully!');
+    setSaving(true);
+    try {
+      if (editingReport) {
+        await saveWeeklyReport(editingReport.id, formData);
+        setReports(prev => prev.map(r => r.id === editingReport.id ? { ...formData, id: editingReport.id } : r));
+        toast.success('Report updated successfully!');
+      } else {
+        const newId = Date.now().toString();
+        await saveWeeklyReport(newId, formData);
+        setReports(prev => [{ ...formData, id: newId }, ...prev]);
+        toast.success('Report added successfully!');
+      }
+      resetForm();
+    } catch (err) {
+      toast.error('Failed to save report');
+    } finally {
+      setSaving(false);
     }
-    resetForm();
   };
 
   const handleEdit = (report) => {
     setEditingReport(report);
-    setFormData({ coverImage: report.coverImage, title: report.title, description: report.description, date: report.date, category: report.category });
+    // Normalize date from Firestore Timestamp if needed
+    const dateVal = report.date?.toDate
+      ? report.date.toDate().toISOString().split('T')[0]
+      : report.date;
+    setFormData({
+      coverImage: report.coverImage,
+      title: report.title,
+      description: report.description,
+      date: dateVal,
+      category: report.category,
+    });
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (confirm('Are you sure you want to delete this report?')) {
-      const updated = reports.filter(r => r.id !== id);
-      saveWeeklyReports(updated); setReports(updated); toast.success('Report deleted successfully!');
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this report?')) return;
+    try {
+      await deleteWeeklyReport(id);
+      setReports(prev => prev.filter(r => r.id !== id));
+      toast.success('Report deleted successfully!');
+    } catch (err) {
+      toast.error('Failed to delete report');
     }
   };
 
   const resetForm = () => {
     setFormData({ coverImage: '', title: '', description: '', date: new Date().toISOString().split('T')[0], category: 'Event' });
-    setEditingReport(null); setIsFormOpen(false);
+    setEditingReport(null);
+    setIsFormOpen(false);
   };
 
   const handleFileUpload = (e) => {
@@ -65,6 +108,13 @@ export function WeeklyReportsManager() {
     const reader = new FileReader();
     reader.onload = () => setFormData(p => ({ ...p, coverImage: reader.result }));
     reader.readAsDataURL(file);
+  };
+
+  // Helper to format date from Firestore Timestamp or string
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = date?.toDate ? date.toDate() : new Date(date);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const inputClass = {
@@ -108,6 +158,7 @@ export function WeeklyReportsManager() {
           color: #a8a29e;
           margin-bottom: 6px;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       {/* Header */}
@@ -130,8 +181,15 @@ export function WeeklyReportsManager() {
         </button>
       </div>
 
-      {/* Empty state */}
-      {reports.length === 0 && (
+      {/* Loading state */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 rounded-2xl"
+          style={{ background: 'white', border: '1.5px solid #f0e8e5' }}>
+          <div className="w-8 h-8 rounded-full border-2 border-t-transparent mb-3"
+            style={{ borderColor: '#c0392b', animation: 'spin 1s linear infinite' }} />
+          <p className="text-sm font-semibold" style={{ color: '#a8a29e' }}>Loading reports...</p>
+        </div>
+      ) : reports.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 rounded-2xl"
           style={{ background: 'white', border: '1.5px dashed #f0d8d3' }}>
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
@@ -141,61 +199,54 @@ export function WeeklyReportsManager() {
           <p className="font-semibold text-sm" style={{ color: '#a8a29e' }}>No reports yet</p>
           <p className="text-xs mt-1" style={{ color: '#c4b5b0' }}>Click "Add Report" to publish your first update</p>
         </div>
-      )}
+      ) : (
+        /* Grid */
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {reports.map((report) => {
+            const s = getCategoryStyle(report.category);
+            return (
+              <div key={report.id} className="report-card">
+                <div className="relative h-48 overflow-hidden shrink-0" style={{ background: '#f5f0ed' }}>
+                  <img src={report.coverImage} alt={report.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,25,23,0.4) 0%, transparent 55%)' }} />
+                  <span className={`absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide ${s.badge}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{report.category}
+                  </span>
+                  <span className="absolute bottom-3 right-3 flex items-center gap-1 text-xs text-white/90 font-semibold bg-black/30 px-2 py-1 rounded-lg backdrop-blur-sm">
+                    <Calendar size={11} />
+                    {formatDate(report.date)}
+                  </span>
+                </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {reports.map((report) => {
-          const s = getCategoryStyle(report.category);
-          return (
-            <div key={report.id} className="report-card">
-              {/* Image */}
-              <div className="relative h-48 overflow-hidden shrink-0" style={{ background: '#f5f0ed' }}>
-                <img src={report.coverImage} alt={report.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(28,25,23,0.4) 0%, transparent 55%)' }} />
-                <span className={`absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide ${s.badge}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{report.category}
-                </span>
-                <span className="absolute bottom-3 right-3 flex items-center gap-1 text-xs text-white/90 font-semibold bg-black/30 px-2 py-1 rounded-lg backdrop-blur-sm">
-                  <Calendar size={11} />
-                  {new Date(report.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </span>
-              </div>
-
-              {/* Body */}
-              <div className="p-5 flex flex-col flex-1">
-                <h3 className="font-bold text-sm leading-snug mb-2 line-clamp-2" style={{ color: '#1c1917' }}>{report.title}</h3>
-                <p className="text-xs leading-relaxed line-clamp-3 flex-1" style={{ color: '#78716c' }}>{report.description}</p>
-                <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: '1px solid #f5ede9' }}>
-                  <button
-                    onClick={() => handleEdit(report)}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all duration-200"
-                    style={{ background: 'rgba(59,130,246,0.06)', border: '1.5px solid rgba(59,130,246,0.15)', color: '#2563eb' }}
-                  >
-                    <Edit size={12} /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(report.id)}
-                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all duration-200"
-                    style={{ background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b' }}
-                  >
-                    <Trash2 size={12} /> Delete
-                  </button>
+                <div className="p-5 flex flex-col flex-1">
+                  <h3 className="font-bold text-sm leading-snug mb-2 line-clamp-2" style={{ color: '#1c1917' }}>{report.title}</h3>
+                  <p className="text-xs leading-relaxed line-clamp-3 flex-1" style={{ color: '#78716c' }}>{report.description}</p>
+                  <div className="flex gap-2 mt-4 pt-4" style={{ borderTop: '1px solid #f5ede9' }}>
+                    <button onClick={() => handleEdit(report)}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all duration-200"
+                      style={{ background: 'rgba(59,130,246,0.06)', border: '1.5px solid rgba(59,130,246,0.15)', color: '#2563eb' }}>
+                      <Edit size={12} /> Edit
+                    </button>
+                    <button onClick={() => handleDelete(report.id)}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all duration-200"
+                      style={{ background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b' }}>
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modal */}
       {isFormOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ background: 'rgba(28, 25, 23, 0.1)', backdropFilter: 'blur(6px)' }}>
-          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl"
+          style={{ background: 'rgba(28, 25, 23, 0.1)', backdropFilter: 'blur(2px)' }}>
+          <div className="w-full max-w-2xl mt-40 max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl"
             style={{ background: 'white', border: '1.5px solid #f0e8e5' }}>
 
-            {/* Modal Header */}
             <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 z-10"
               style={{ borderBottom: '1.5px solid #f5ede9' }}>
               <div className="flex items-center gap-3">
@@ -212,17 +263,14 @@ export function WeeklyReportsManager() {
                   </h3>
                 </div>
               </div>
-              <button
-                onClick={resetForm}
+              <button onClick={resetForm}
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}
-              >
+                style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}>
                 <X size={15} />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              {/* Cover Image */}
               <div>
                 <label className="label-style">Cover Image</label>
                 <div className="flex gap-3 items-start">
@@ -239,76 +287,49 @@ export function WeeklyReportsManager() {
                 </div>
               </div>
 
-              {/* Title */}
               <div>
                 <label className="label-style">Title</label>
-                <input
-                  type="text"
-                  className="modal-input"
-                  value={formData.title}
+                <input type="text" className="modal-input" value={formData.title}
                   onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))}
-                  style={inputClass}
-                  placeholder="e.g. Fire Prevention Month Campaign"
-                  required
-                />
+                  style={inputClass} placeholder="e.g. Fire Prevention Month Campaign" required />
               </div>
 
-              {/* Description */}
               <div>
                 <label className="label-style">Description</label>
-                <textarea
-                  className="modal-input"
-                  value={formData.description}
+                <textarea className="modal-input" value={formData.description}
                   onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))}
                   style={{ ...inputClass, resize: 'none' }}
                   placeholder="Brief description of the activity or event..."
-                  rows={4}
-                  required
-                />
+                  rows={4} required />
               </div>
 
-              {/* Date & Category */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="label-style">Date</label>
-                  <input
-                    type="date"
-                    className="modal-input"
-                    value={formData.date}
+                  <input type="date" className="modal-input" value={formData.date}
                     onChange={(e) => setFormData(p => ({ ...p, date: e.target.value }))}
-                    style={inputClass}
-                    required
-                  />
+                    style={inputClass} required />
                 </div>
                 <div>
                   <label className="label-style">Category</label>
-                  <select
-                    className="modal-input"
-                    value={formData.category}
+                  <select className="modal-input" value={formData.category}
                     onChange={(e) => setFormData(p => ({ ...p, category: e.target.value }))}
-                    style={inputClass}
-                    required
-                  >
+                    style={inputClass} required>
                     {CATEGORY_OPTIONS.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
                 </div>
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 text-white font-bold py-3 rounded-xl text-sm transition-all"
-                  style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.25)' }}
-                >
+                <button type="submit" disabled={saving}
+                  className="flex-1 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.25)', opacity: saving ? 0.7 : 1 }}>
+                  {saving && <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent" style={{ animation: 'spin 1s linear infinite' }} />}
                   {editingReport ? 'Update Report' : 'Publish Report'}
                 </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
+                <button type="button" onClick={resetForm}
                   className="flex-1 font-bold py-3 rounded-xl text-sm transition-all"
-                  style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}
-                >
+                  style={{ background: '#f5f0ed', border: '1.5px solid #ede8e5', color: '#78716c' }}>
                   Cancel
                 </button>
               </div>

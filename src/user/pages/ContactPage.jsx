@@ -5,7 +5,6 @@ import {
 } from "lucide-react";
 import { getContactInfo } from "../../utils/storage";
 
-// ─── Default fallback (mirrors DEFAULT_CONTACT_INFO in storage.js) ────────────
 const DEFAULT_DATA = {
   nationalEmergency: "911",
   localHotline: "(088) 856-FIRE",
@@ -27,18 +26,16 @@ const DEFAULT_DATA = {
   ],
 };
 
-// ─── Helpers to normalise data coming from storage ────────────────────────────
 function normalise(raw) {
   if (!raw) return DEFAULT_DATA;
   return {
-    ...DEFAULT_DATA,    // keep defaults for any field not yet saved
+    ...DEFAULT_DATA,
     ...raw,
     officeHours: Array.isArray(raw.officeHours) ? raw.officeHours : DEFAULT_DATA.officeHours,
     barangays:   Array.isArray(raw.barangays)   ? raw.barangays   : DEFAULT_DATA.barangays,
   };
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
 function LiveBadge() {
   return (
     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
@@ -79,10 +76,8 @@ function ContactCard({ icon, label, value, href, description, accent = "#c0392b"
         transform: hov ? "translateY(-4px)" : "none",
         transition: "all 0.22s ease",
       }}>
-      {/* top accent strip */}
       <div className="absolute top-0 left-0 right-0 h-[3px]"
         style={{ background: `linear-gradient(90deg, ${accent}, ${accent}80)`, opacity: hov ? 1 : 0, transition: "opacity 0.2s" }} />
-
       <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
         style={{ background: hov ? `${accent}18` : "rgba(192,57,43,0.06)", border: `1.5px solid ${hov ? accent + "30" : "#f0e8e5"}`, color: accent, transition: "all 0.2s" }}>
         {icon}
@@ -95,12 +90,8 @@ function ContactCard({ icon, label, value, href, description, accent = "#c0392b"
 
   if (!href) return inner;
   return (
-    <a
-      href={href}
-      target={href.startsWith("mailto") || href.startsWith("tel") ? "_self" : "_blank"}
-      rel="noreferrer"
-      className="block h-full"
-      style={{ textDecoration: "none" }}>
+    <a href={href} target={href.startsWith("mailto") || href.startsWith("tel") ? "_self" : "_blank"}
+      rel="noreferrer" className="block h-full" style={{ textDecoration: "none" }}>
       {inner}
     </a>
   );
@@ -127,28 +118,32 @@ function BarangayChip({ name }) {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
 export function ContactPage() {
   const [contact, setContact] = useState(null);
   const [mounted, setMounted] = useState(false);
 
-  // Initial load
+  const loadContact = async () => {
+    try {
+      const info = await getContactInfo();
+      setContact(normalise(info));
+    } catch (err) {
+      console.error('Failed to load contact info:', err);
+      setContact(DEFAULT_DATA);
+    }
+  };
+
   useEffect(() => {
-    const info = getContactInfo();
-    setContact(normalise(info));
-    setTimeout(() => setMounted(true), 80);
+    loadContact().then(() => setTimeout(() => setMounted(true), 80));
   }, []);
 
-  // Poll every 2 s — picks up any saves made on the admin ContactManager
+  // Poll every 5s to pick up admin changes
   useEffect(() => {
     const id = setInterval(() => {
-      const info = getContactInfo();
-      if (info) setContact(normalise(info));
-    }, 2000);
+      loadContact();
+    }, 5000);
     return () => clearInterval(id);
   }, []);
 
-  // Loading state
   if (!contact) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#fdf9f8" }}>
@@ -181,17 +176,14 @@ export function ContactPage() {
         a { text-decoration: none; color: inherit; }
       `}</style>
 
-
-
       {/* ── HERO ── */}
       <section
         className="relative py-16 sm:py-10 overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%",
+          background: "linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%)",
           opacity: mounted ? 1 : 0,
           transition: "opacity 0.7s ease",
         }}>
-        {/* grid texture */}
         <div className="absolute inset-0 pointer-events-none opacity-10"
           style={{
             backgroundImage: "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.15) 1px,transparent 1px)",
@@ -213,9 +205,9 @@ export function ContactPage() {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <StatBlock value={contact.nationalEmergency || "911"} label="Emergency"   accent="#fde68a" />
-            <StatBlock value="24/7"                               label="Response"    accent="#6ee7b7" />
-            <StatBlock value={contact.barangays.length}           label="Barangays"   accent="#93c5fd" />
+            <StatBlock value={contact.nationalEmergency || "911"} label="Emergency"    accent="#fde68a" />
+            <StatBlock value="24/7"                               label="Response"     accent="#6ee7b7" />
+            <StatBlock value={contact.barangays.length}           label="Barangays"    accent="#93c5fd" />
             <StatBlock value="<5min"                              label="Avg. Response" accent="#fda4af" />
           </div>
         </div>
@@ -318,105 +310,49 @@ export function ContactPage() {
       </section>
 
       {/* ── LOCATION ── */}
-{/* ── LOCATION ── */}
-<section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5">
-  <div
-    className="rounded-2xl overflow-hidden"
-    style={{
-      background: "white",
-      border: "1.5px solid #f0e8e5",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-    }}
-  >
-    {/* Satellite Map */}
-    <div className="relative h-80 overflow-hidden bg-black">
-      {/* FREE Satellite Image (Esri World Imagery) */}
-      <img
-        src="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=124.6466,8.4794,124.6482,8.4808&bboxSR=4326&imageSR=4326&size=800,400&format=png&f=image"
-        alt="BFP Cogon Fire Station Satellite Map"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-
-      {/* Dark overlay for contrast */}
-      <div className="absolute inset-0 bg-black/10" />
-
-      {/* Location Pin */}
-      <div
-        className="absolute left-1/2 top-1/2"
-        style={{ transform: "translate(-50%, -100%)" }}
-      >
-        <div className="flex flex-col items-center">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
-            style={{
-              background: "linear-gradient(135deg,#c0392b,#e67e22)",
-              boxShadow: "0 4px 12px rgba(192,57,43,0.45)",
-            }}
-          >
-            <MapPin size={18} className="text-white" />
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5">
+        <div className="rounded-2xl overflow-hidden"
+          style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="relative h-80 overflow-hidden bg-black">
+            <img
+              src="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=124.6466,8.4794,124.6482,8.4808&bboxSR=4326&imageSR=4326&size=800,400&format=png&f=image"
+              alt="BFP Cogon Fire Station Satellite Map"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="absolute left-1/2 top-1/2" style={{ transform: "translate(-50%, -100%)" }}>
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                  style={{ background: "linear-gradient(135deg,#c0392b,#e67e22)", boxShadow: "0 4px 12px rgba(192,57,43,0.45)" }}>
+                  <MapPin size={18} className="text-white" />
+                </div>
+                <div className="w-0.5 h-3 bg-[#c0392b]" />
+                <div className="w-4 h-2 rounded-full" style={{ background: "rgba(0,0,0,0.35)", filter: "blur(4px)" }} />
+              </div>
+            </div>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap"
+              style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+              <MapPin size={12} style={{ color: "#c0392b" }} />
+              <span className="text-xs font-semibold" style={{ color: "#1c1917" }}>BFP Cogon Fire Station</span>
+            </div>
           </div>
-          <div className="w-0.5 h-3 bg-[#c0392b]" />
-          <div
-            className="w-4 h-2 rounded-full"
-            style={{
-              background: "rgba(0,0,0,0.35)",
-              filter: "blur(4px)",
-            }}
-          />
+
+          <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            style={{ borderTop: "1.5px solid #f5ede9" }}>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#c4b5b0" }}>Station Address</p>
+              <p className="font-semibold text-sm" style={{ color: "#1c1917" }}>
+                {contact.location || "Cogon Fire Station, Cagayan de Oro City"}
+              </p>
+            </div>
+            <a href={mapsUrl} target="_blank" rel="noreferrer"
+              className="flex items-center gap-2 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all hover:scale-105 shrink-0"
+              style={{ background: "linear-gradient(135deg,#c0392b,#e67e22)", boxShadow: "0 3px 10px rgba(237, 29, 6, 0.25)" }}>
+              <ExternalLink size={13} /> Open in Google Maps
+            </a>
+          </div>
         </div>
-      </div>
-
-      {/* Label */}
-      <div
-        className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap"
-        style={{
-          background: "white",
-          border: "1.5px solid #f0e8e5",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-        }}
-      >
-        <MapPin size={12} style={{ color: "#c0392b" }} />
-        <span
-          className="text-xs font-semibold"
-          style={{ color: "#1c1917" }}
-        >
-          BFP Cogon Fire Station
-        </span>
-      </div>
-    </div>
-
-    {/* Address + Button */}
-    <div
-      className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-      style={{ borderTop: "1.5px solid #f5ede9" }}
-    >
-      <div>
-        <p
-          className="text-[10px] font-bold uppercase tracking-widest mb-1"
-          style={{ color: "#c4b5b0" }}
-        >
-          Station Address
-        </p>
-        <p className="font-semibold text-sm" style={{ color: "#1c1917" }}>
-          {contact.location || "Cogon Fire Station, Cagayan de Oro City"}
-        </p>
-      </div>
-
-      <a
-        href={mapsUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-2 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all hover:scale-105 shrink-0"
-        style={{
-          background: "linear-gradient(135deg,#c0392b,#e67e22)",
-          boxShadow: "0 3px 10px rgba(237, 29, 6, 0.25)",
-        }}
-      >
-        <ExternalLink size={13} /> Open in Google Maps
-      </a>
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* ── BARANGAYS ── */}
       {contact.barangays.length > 0 && (

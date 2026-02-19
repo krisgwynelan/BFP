@@ -2,14 +2,28 @@ import { Link } from 'react-router';
 import { WeeklyReportsSlideshow } from '../components/WeeklyReportsSlideshow';
 import { getWeeklyReports } from '../../utils/storage';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Shield, Flame, Clock, BookOpen, Phone, ChevronDown } from 'lucide-react';
+import { ArrowRight, Shield, Clock, BookOpen, Phone, ChevronDown } from 'lucide-react';
 import Fire from '/Fire.jpg';
 
 export function HomePage() {
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
-    setReports(getWeeklyReports());
+    const load = async () => {
+      try {
+        const data = await getWeeklyReports();
+        // Sort by date descending
+        const sorted = data.sort((a, b) => {
+          const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+          const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+          return dateB - dateA;
+        });
+        setReports(sorted);
+      } catch (err) {
+        console.error('Failed to load reports:', err);
+      }
+    };
+    load();
   }, []);
 
   return (
@@ -59,24 +73,19 @@ export function HomePage() {
 
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="relative min-h-screen flex flex-col justify-end overflow-hidden">
-        {/* BG Image */}
         <img src={Fire} alt="Fire Station" className="absolute inset-0 w-full h-full object-cover" />
 
-        {/* Gradient overlays */}
         <div className="absolute inset-0"
           style={{ background: 'linear-gradient(to top, rgba(10,5,2,0.92) 0%, rgba(15,5,2,0.65) 40%, rgba(0,0,0,0.25) 100%)' }} />
         <div className="absolute inset-0"
           style={{ background: 'linear-gradient(to right, rgba(10,5,2,0.6) 0%, transparent 60%)' }} />
 
-        {/* Diagonal accent strip */}
         <div className="absolute top-0 left-0 w-1 h-full opacity-80"
           style={{ background: 'linear-gradient(to bottom, #c0392b, #e67e22, transparent)' }} />
 
-        {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 pt-32 w-full">
           <div className="max-w-3xl">
 
-            {/* Live badge */}
             <div className="hero-fade-1 flex items-center gap-2 mb-6">
               <span className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest text-white"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
@@ -90,7 +99,6 @@ export function HomePage() {
               </span>
             </div>
 
-            {/* Headline */}
             <h1 className="hero-fade-2 text-white leading-none mb-5"
               style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3.2rem, 8vw, 6.5rem)', letterSpacing: '0.04em' }}>
               COGON<br />
@@ -106,7 +114,6 @@ export function HomePage() {
               Committed to preventing and suppressing destructive fires, safeguarding lives and properties, and promoting fire safety awareness throughout Northern Mindanao.
             </p>
 
-            {/* CTA Row */}
             <div className="hero-fade-4 flex flex-wrap gap-3 mb-10">
               <Link to="/about"
                 className="flex items-center gap-2 font-bold text-sm px-6 py-3 rounded-xl text-white transition-all hover:scale-105"
@@ -120,7 +127,6 @@ export function HomePage() {
               </a>
             </div>
 
-            {/* Stats */}
             <div className="hero-fade-4 flex flex-wrap gap-3">
               {[
                 { value: '24/7', label: 'Response' },
@@ -137,7 +143,6 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 scroll-indicator" style={{ transform: 'translateX(-50%)' }}>
           <ChevronDown size={22} className="text-white/40" />
         </div>

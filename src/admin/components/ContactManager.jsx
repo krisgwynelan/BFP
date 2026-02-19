@@ -8,11 +8,9 @@ import { toast } from 'sonner';
 
 const EMPTY_HOUR = { type: '', time: '' };
 
-// Always returns a safe object — officeHours and barangays are guaranteed arrays
 function normalise(raw) {
   if (!raw) raw = {};
   return {
-    id: raw.id || '1',
     nationalEmergency: raw.nationalEmergency || '',
     localHotline:      raw.localHotline      || '',
     email:             raw.email             || '',
@@ -25,34 +23,53 @@ function normalise(raw) {
 
 export function ContactManager() {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [contact, setContact] = useState(null);
   const [formData, setFormData] = useState(null);
   const [newBarangay, setNewBarangay] = useState('');
   const [showHoursEditor, setShowHoursEditor] = useState(false);
 
-  // ── Load from storage on mount ─────────────────────────────────────────────
   useEffect(() => {
-    const saved = normalise(getContactInfo());
-    setContact(saved);
-    setFormData(JSON.parse(JSON.stringify(saved)));
+    const load = async () => {
+      setLoading(true);
+      try {
+        const saved = await getContactInfo();
+        const norm = normalise(saved);
+        setContact(norm);
+        setFormData(JSON.parse(JSON.stringify(norm)));
+      } catch (err) {
+        toast.error('Failed to load contact info');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  if (!contact || !formData) return (
+  if (loading || !contact || !formData) return (
     <div className="flex items-center justify-center py-20">
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div className="w-8 h-8 rounded-full border-2 border-t-transparent"
         style={{ borderColor: '#c0392b', animation: 'spin 1s linear infinite' }} />
     </div>
   );
 
-  // ── Save to localStorage → immediately visible on ContactPage ─────────────
-  const handleSave = () => {
-    const clean = normalise(formData);
-    saveContactInfo(clean);
-    setContact(JSON.parse(JSON.stringify(clean)));
-    setFormData(JSON.parse(JSON.stringify(clean)));
-    setIsEditing(false);
-    setShowHoursEditor(false);
-    toast.success('Contact information saved! Changes are now live on the public site.');
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const clean = normalise(formData);
+      await saveContactInfo(clean);
+      setContact(JSON.parse(JSON.stringify(clean)));
+      setFormData(JSON.parse(JSON.stringify(clean)));
+      setIsEditing(false);
+      setShowHoursEditor(false);
+      toast.success('Contact information saved! Changes are now live on the public site.');
+    } catch (err) {
+      toast.error('Failed to save contact info');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -61,11 +78,9 @@ export function ContactManager() {
     setShowHoursEditor(false);
   };
 
-  // ── Generic field setter ───────────────────────────────────────────────────
   const setField = (key, value) =>
     setFormData(p => ({ ...p, [key]: value }));
 
-  // ── Office Hours CRUD ──────────────────────────────────────────────────────
   const addHour = () =>
     setFormData(p => ({
       ...p,
@@ -85,7 +100,6 @@ export function ContactManager() {
       officeHours: p.officeHours.filter((_, i) => i !== idx),
     }));
 
-  // ── Barangay CRUD ──────────────────────────────────────────────────────────
   const addBarangay = () => {
     const name = newBarangay.trim();
     if (!name) return;
@@ -103,7 +117,6 @@ export function ContactManager() {
       barangays: p.barangays.filter((_, i) => i !== idx),
     }));
 
-  // ── Shared styles ──────────────────────────────────────────────────────────
   const inputStyle = {
     width: '100%',
     background: 'white',
@@ -133,7 +146,6 @@ export function ContactManager() {
     boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
   };
 
-  // Decide which data to show (live contact or in-progress formData)
   const displayed = isEditing ? formData : contact;
 
   return (
@@ -161,7 +173,7 @@ export function ContactManager() {
             Station Management
           </p>
           <h2 className="font-black leading-none"
-            style={{ fontFamily: "'Bebas Neue', sans-serif', letterSpacing: '0.05em", fontSize: '2.2rem', color: '#1c1917' }}>
+            style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917' }}>
             Contact Information
           </h2>
           <p className="text-sm mt-1" style={{ color: '#78716c' }}>
@@ -178,10 +190,13 @@ export function ContactManager() {
             </button>
           ) : (
             <>
-              <button onClick={handleSave}
+              <button onClick={handleSave} disabled={saving}
                 className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl text-white"
-                style={{ background: 'linear-gradient(135deg, #27ae60, #2ecc71)', boxShadow: '0 4px 14px rgba(39,174,96,0.25)' }}>
-                <Save size={14} /> Save Changes
+                style={{ background: 'linear-gradient(135deg, #27ae60, #2ecc71)', boxShadow: '0 4px 14px rgba(39,174,96,0.25)', opacity: saving ? 0.7 : 1 }}>
+                {saving
+                  ? <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent" style={{ animation: 'spin 1s linear infinite' }} />
+                  : <Save size={14} />}
+                Save Changes
               </button>
               <button onClick={handleCancel}
                 className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl"
@@ -193,13 +208,12 @@ export function ContactManager() {
         </div>
       </div>
 
-      {/* Edit mode notice */}
       {isEditing && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl mb-6"
           style={{ background: 'rgba(39,174,96,0.07)', border: '1.5px solid rgba(39,174,96,0.2)' }}>
           <Edit size={13} style={{ color: '#27ae60', flexShrink: 0 }} />
           <p className="text-xs font-semibold" style={{ color: '#27ae60' }}>
-            Edit mode — Save when done. Changes will appear instantly on the public Contact page.
+            Edit mode — Save when done. Changes will appear on the public Contact page.
           </p>
         </div>
       )}
@@ -216,7 +230,6 @@ export function ContactManager() {
                 Live Preview
               </p>
 
-              {/* 911 */}
               <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: '1px solid #f5ede9' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                   style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)', boxShadow: '0 3px 10px rgba(192,57,43,0.28)' }}>
@@ -303,14 +316,11 @@ export function ContactManager() {
                     {label}
                   </label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      className="cm-inp"
+                    <input type="text" className="cm-inp"
                       value={formData[key] || ''}
                       onChange={e => setField(key, e.target.value)}
                       style={{ ...inputStyle, ...(accent ? { borderColor: `${accent}30` } : {}) }}
-                      placeholder={placeholder}
-                    />
+                      placeholder={placeholder} />
                   ) : (
                     <p style={readonlyStyle}>
                       {contact[key] || <span style={{ color: '#c4b5b0', fontStyle: 'italic', fontSize: '12px' }}>Not set</span>}
@@ -405,15 +415,12 @@ export function ContactManager() {
             <div className="p-6">
               {isEditing && (
                 <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    className="cm-inp flex-1"
+                  <input type="text" className="cm-inp flex-1"
                     style={{ ...inputStyle, flex: 1 }}
                     value={newBarangay}
                     onChange={e => setNewBarangay(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addBarangay(); } }}
-                    placeholder="Type barangay name, then press Enter or click Add"
-                  />
+                    placeholder="Type barangay name, then press Enter or click Add" />
                   <button onClick={addBarangay}
                     className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white shrink-0"
                     style={{ background: 'linear-gradient(135deg, #c0392b, #e67e22)' }}>
@@ -448,11 +455,11 @@ export function ContactManager() {
             style={{ background: 'rgba(192,57,43,0.04)', border: '1.5px solid rgba(192,57,43,0.12)' }}>
             <AlertCircle size={13} style={{ color: '#c0392b', marginTop: 1, flexShrink: 0 }} />
             <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>
-              Data is stored under{' '}
+              Data is stored in <strong>Firebase Firestore</strong> under the{' '}
               <code style={{ background: '#f5ede9', padding: '1px 5px', borderRadius: '4px', color: '#c0392b', fontSize: '11px' }}>
-                bfp_contact_info
+                settings/contact
               </code>{' '}
-              in localStorage. The public <strong>Contact page</strong> reads from the same key every 2 seconds, so updates appear within moments of saving.
+              document. The public <strong>Contact page</strong> polls Firebase every 5 seconds, so updates appear shortly after saving.
             </p>
           </div>
         </div>

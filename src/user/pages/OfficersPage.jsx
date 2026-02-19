@@ -1,13 +1,60 @@
 import { useEffect, useState } from 'react';
 import { RANK_ABBREVIATIONS } from '../../utils/types';
 import { getOfficers } from '../../utils/storage';
-import { Shield, Phone, Users, Award } from 'lucide-react';
+import { Award, Users, Phone } from 'lucide-react';
+
+// ─── Safe image with initials fallback ───────────────────────────────────────
+function OfficerAvatar({ src, name, size = 128 }) {
+  const [broken, setBroken] = useState(false);
+  const initials = (name || '?').split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+  useEffect(() => { setBroken(false); }, [src]);
+
+  if (!src || broken) {
+    return (
+      <div
+        className="flex items-center justify-center font-bold border-4 border-red-100 group-hover:border-red-300 transition-colors"
+        style={{
+          width: size, height: size,
+          borderRadius: '50%',
+          fontSize: size * 0.22,
+          background: 'linear-gradient(135deg, rgba(192,57,43,0.12), rgba(230,126,34,0.12))',
+          color: '#c0392b',
+        }}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="border-4 border-red-100 group-hover:border-red-300 transition-colors"
+      style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover' }}
+      onError={() => setBroken(true)}
+    />
+  );
+}
 
 export function OfficersPage() {
   const [officers, setOfficers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setOfficers(getOfficers());
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await getOfficers();
+        setOfficers(data);
+      } catch (err) {
+        console.error('Failed to load officers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
   const rankHierarchy = [
@@ -29,20 +76,13 @@ export function OfficersPage() {
     return rankA - rankB;
   });
 
-  // Rank badge color tiers
-  const getRankTier = (rank) => {
-    if (rank.includes('Chief')) return { bg: 'rgba(192,57,43,0.1)', color: '#c0392b', border: 'rgba(192,57,43,0.25)' };
-    if (rank.includes('Senior Fire Inspector') || rank.includes('Fire Inspector')) return { bg: 'rgba(211,84,0,0.1)', color: '#d35400', border: 'rgba(211,84,0,0.25)' };
-    if (rank.includes('Senior')) return { bg: 'rgba(180,83,9,0.08)', color: '#b45309', border: 'rgba(180,83,9,0.2)' };
-    return { bg: 'rgba(120,113,108,0.08)', color: '#57534e', border: 'rgba(120,113,108,0.18)' };
-  };
-
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#fdf9f8', minHeight: '100vh' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .officer-card {
           background: white;
           border: 1.5px solid #f0e8e5;
@@ -56,14 +96,11 @@ export function OfficersPage() {
           box-shadow: 0 20px 48px rgba(192,57,43,0.1);
           border-color: #e8c4bc;
         }
-        .officer-card:hover .officer-img { transform: scale(1.05); }
-        .officer-img { transition: transform 0.4s ease; }
       `}</style>
 
       {/* ── HERO SECTION ── */}
       <section className="relative overflow-hidden py-16 sm:py-20"
         style={{ background: 'linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%)' }}>
-        {/* Subtle pattern overlay */}
         <div className="absolute inset-0 pointer-events-none opacity-10"
           style={{
             backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)',
@@ -85,10 +122,9 @@ export function OfficersPage() {
             Meet the dedicated team protecting BFP Station 1 — Cogon, Cagayan de Oro City
           </p>
 
-          {/* Stats row */}
           <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
             {[
-              { value: sortedOfficers.length, label: 'Active Officers' },
+              { value: loading ? '...' : sortedOfficers.length, label: 'Active Officers' },
               { value: '24/7', label: 'On Duty' },
               { value: 'Station 1', label: 'Assignment' },
             ].map(({ value, label }) => (
@@ -103,9 +139,15 @@ export function OfficersPage() {
         </div>
       </section>
 
-      {/* Officers Grid */}
+      {/* ── OFFICERS GRID ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {sortedOfficers.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 rounded-full border-2 border-t-transparent mb-4"
+              style={{ borderColor: '#c0392b', animation: 'spin 1s linear infinite' }} />
+            <p className="text-sm font-semibold" style={{ color: '#a8a29e' }}>Loading officers...</p>
+          </div>
+        ) : sortedOfficers.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-gray-500 text-lg">No officers information available</p>
           </div>
@@ -117,23 +159,20 @@ export function OfficersPage() {
                 className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden group"
               >
                 <div className="p-6 text-center">
-                  {/* Profile Image */}
-                  <div className="relative mx-auto w-32 h-32 mb-4">
-                    <img
-                      src={officer.profileImage}
-                      alt={officer.fullName}
-                      className="w-full h-full rounded-full object-cover border-4 border-red-100 group-hover:border-red-300 transition-colors"
-                    />
-                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                  <div className="relative mx-auto mb-4" style={{ width: 128, height: 128 }}>
+                    {/* OfficerAvatar handles broken/missing images with initials fallback */}
+                    <OfficerAvatar src={officer.profileImage} name={officer.fullName} size={128} />
+
+                    {/* Rank badge */}
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md whitespace-nowrap">
                       {RANK_ABBREVIATIONS[officer.rank] || officer.rank}
                     </div>
                   </div>
 
-                  {/* Officer Details */}
-                  <h3 className="font-bold text-xl text-gray-900 mb-1">
+                  <h3 className="font-bold text-xl text-gray-900 mb-1 mt-3">
                     {officer.fullName}
                   </h3>
-                  
+
                   <p className="text-sm text-red-600 font-semibold mb-3">
                     {officer.rank}
                   </p>
@@ -142,12 +181,10 @@ export function OfficersPage() {
                     <p className="text-gray-700 font-medium mb-3">
                       {officer.roleAssignment}
                     </p>
-                    
+
                     {officer.contactNumber && (
                       <div className="text-sm text-gray-600 flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
+                        <Phone size={14} className="text-gray-400" />
                         <span>{officer.contactNumber}</span>
                       </div>
                     )}

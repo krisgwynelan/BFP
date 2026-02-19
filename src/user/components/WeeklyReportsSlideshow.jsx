@@ -10,6 +10,13 @@ const CATEGORY_CONFIG = {
 };
 const getCatConfig = (cat) => CATEGORY_CONFIG[cat] || { color: '#78716c', bg: 'rgba(120,113,108,0.08)', border: 'rgba(120,113,108,0.2)', emoji: '📄' };
 
+// Helper: handle Firestore Timestamp OR string date
+const formatDate = (date) => {
+  if (!date) return '';
+  const d = date?.toDate ? date.toDate() : new Date(date);
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+};
+
 export function WeeklyReportsSlideshow({ reports }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -23,6 +30,11 @@ export function WeeklyReportsSlideshow({ reports }) {
     }, 10000);
     return () => clearInterval(interval);
   }, [isAutoPlaying, reports.length]);
+
+  // Reset index if reports change (e.g. after Firebase load)
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [reports.length]);
 
   const goToSlide = (index) => {
     setDirection(index > currentIndex ? 1 : -1);
@@ -62,6 +74,8 @@ export function WeeklyReportsSlideshow({ reports }) {
   }
 
   const currentReport = reports[currentIndex];
+  if (!currentReport) return null;
+
   const catCfg = getCatConfig(currentReport.category);
 
   const slideVariants = {
@@ -136,7 +150,6 @@ export function WeeklyReportsSlideshow({ reports }) {
                   <div className="absolute inset-0"
                     style={{ background: 'linear-gradient(to top, rgba(28,25,23,0.55) 0%, transparent 55%)' }} />
 
-                  {/* Category Badge */}
                   <span className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide"
                     style={{ background: catCfg.bg, border: `1.5px solid ${catCfg.border}`, color: catCfg.color, backdropFilter: 'blur(8px)', backgroundColor: 'white' }}>
                     <span>{catCfg.emoji}</span>
@@ -160,7 +173,7 @@ export function WeeklyReportsSlideshow({ reports }) {
                   <div className="flex items-center gap-2 mb-4">
                     <Calendar size={13} style={{ color: '#c4b5b0' }} />
                     <span className="text-xs font-semibold" style={{ color: '#a8a29e' }}>
-                      {new Date(currentReport.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {formatDate(currentReport.date)}
                     </span>
                   </div>
 
@@ -187,7 +200,6 @@ export function WeeklyReportsSlideshow({ reports }) {
             </motion.div>
           </AnimatePresence>
 
-          {/* Nav arrows */}
           {reports.length > 1 && (
             <>
               <button onClick={goToPrevious} className="nav-arrow absolute left-4 top-1/2 -translate-y-1/2 z-10">
@@ -243,7 +255,6 @@ export function WeeklyReportsSlideshow({ reports }) {
           </div>
         )}
 
-        {/* Bottom accent */}
         <div className="h-[3px]" style={{ background: 'linear-gradient(90deg, #c0392b, #e67e22, #f39c12)' }} />
       </div>
     </div>
