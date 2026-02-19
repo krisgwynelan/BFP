@@ -220,13 +220,13 @@ export function OfficersManager() {
 
       {/* Modal */}
       {isFormOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ background: 'rgba(28,25,23,0.55)', backdropFilter: 'blur(6px)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 top-30"
+          style={{ background: 'rgba(113, 112, 112, 0.02)', backdropFilter: 'blur(6px)' }}>
           <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl"
             style={{ background: 'white', border: '1.5px solid #f0e8e5' }}>
 
             {/* Modal header */}
-            <div className="sticky top-0 bg-white flex items-center justify-between px-6 py-4 z-10"
+            <div className="sticky top-10 bg-white flex items-center justify-between px-6 py-4 z-10"
               style={{ borderBottom: '1.5px solid #f5ede9' }}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -296,7 +296,7 @@ export function OfficersManager() {
                   <label className="block text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#a8a29e' }}>Full Name</label>
                   <input type="text" className="modal-inp" value={formData.fullName}
                     onChange={(e) => setFormData(p => ({ ...p, fullName: e.target.value }))}
-                    style={inputStyle} placeholder="e.g. Juan M. Dela Cruz" required />
+                    style={inputStyle} placeholder="Enter Name" required />
                 </div>
 
                 <div>

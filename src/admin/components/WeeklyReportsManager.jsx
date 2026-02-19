@@ -191,7 +191,7 @@ export function WeeklyReportsManager() {
       {/* Modal */}
       {isFormOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-          style={{ background: 'rgba(28,25,23,0.6)', backdropFilter: 'blur(6px)' }}>
+          style={{ background: 'rgba(28, 25, 23, 0.1)', backdropFilter: 'blur(6px)' }}>
           <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl"
             style={{ background: 'white', border: '1.5px solid #f0e8e5' }}>
 
