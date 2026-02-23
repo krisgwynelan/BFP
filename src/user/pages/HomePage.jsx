@@ -33,7 +33,7 @@ function getImages(r) {
   return [];
 }
 
-// ─── Lightbox (used only for multi-image from card) ───────────────────────────
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
 function CardLightbox({ images, startIndex, onClose }) {
   const [idx, setIdx]       = useState(startIndex);
   const [zoomed, setZoomed] = useState(false);
@@ -86,18 +86,18 @@ function CardLightbox({ images, startIndex, onClose }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 80px 100px', width: '100%', position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '72px 48px 100px', width: '100%', position: 'relative' }}>
         <img src={images[idx]} alt="" draggable={false} onClick={() => setZoomed(z => !z)}
           style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4, boxShadow: '0 32px 80px rgba(0,0,0,0.9)', transform: zoomed ? 'scale(1.5)' : 'scale(1)', transition: 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)', cursor: zoomed ? 'zoom-out' : 'zoom-in', userSelect: 'none' }}
         />
         {images.length > 1 && !zoomed && (
           <>
             <button type="button" onClick={() => setIdx(i => (i - 1 + images.length) % images.length)}
-              style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: 23, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: 23, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ChevronLeft size={20} />
             </button>
             <button type="button" onClick={() => setIdx(i => (i + 1) % images.length)}
-              style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: 23, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 46, height: 46, borderRadius: 23, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ChevronRight size={20} />
             </button>
           </>
@@ -114,7 +114,7 @@ function CardLightbox({ images, startIndex, onClose }) {
           </div>
         )}
         {images.length > 1 && (
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '80%' }}>
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '90%' }}>
             {images.map((src, i) => (
               <button key={i} type="button" onClick={() => setIdx(i)}
                 style={{ width: 60, height: 42, borderRadius: 5, padding: 0, flexShrink: 0, overflow: 'hidden', border: i === idx ? '2px solid #c0392b' : '2px solid rgba(255,255,255,0.1)', opacity: i === idx ? 1 : 0.36, cursor: 'pointer', transition: 'all 0.22s', transform: i === idx ? 'scale(1.08)' : 'scale(1)', background: 'transparent' }}>
@@ -129,8 +129,6 @@ function CardLightbox({ images, startIndex, onClose }) {
 }
 
 // ─── Report Card ──────────────────────────────────────────────────────────────
-// onCardClick: called when card body is clicked → jumps slideshow
-// "View X Photos" button → opens lightbox (only shows if images > 1)
 function ReportCard({ report, onCardClick }) {
   const [imgIdx, setImgIdx]             = useState(0);
   const [hovered, setHovered]           = useState(false);
@@ -164,7 +162,7 @@ function ReportCard({ report, onCardClick }) {
           cursor: 'pointer',
         }}
       >
-        {/* Image area — click = jump slideshow */}
+        {/* Image area */}
         <div
           style={{ position: 'relative', height: 210, overflow: 'hidden', flexShrink: 0, background: cfg.bg, cursor: 'pointer' }}
           onClick={handleCardClick}
@@ -178,18 +176,12 @@ function ReportCard({ report, onCardClick }) {
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, opacity: 0.28 }}>{cfg.emoji}</div>
           )}
-
-          {/* Bottom gradient */}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.05) 50%, transparent 100%)', pointerEvents: 'none' }} />
-
-          {/* Category badge */}
           <div style={{ position: 'absolute', top: 12, left: 12, pointerEvents: 'none' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: cfg.color, boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
               {cfg.emoji} {report.category}
             </span>
           </div>
-
-          {/* Image count badge */}
           {images.length > 1 && (
             <div style={{ position: 'absolute', top: 12, right: 12, pointerEvents: 'none' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', fontSize: 9, fontWeight: 700, color: 'white' }}>
@@ -197,19 +189,14 @@ function ReportCard({ report, onCardClick }) {
               </span>
             </div>
           )}
-
-          {/* Title overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 14px 12px', pointerEvents: 'none' }}>
             <h3 style={{ fontSize: 14, fontWeight: 800, color: 'white', lineHeight: 1.3, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
               {report.title}
             </h3>
           </div>
-
-          {/* Hover icon — indicates "go to slideshow" */}
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: hovered ? 1 : 0, transition: 'opacity 0.22s', pointerEvents: 'none', background: hovered ? 'rgba(0,0,0,0.1)' : 'transparent' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(192,57,43,0.85)', backdropFilter: 'blur(12px)', border: '2px solid rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(192,57,43,0.5)' }}>
-                {/* Play/expand icon */}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><polyline points="8,21 12,17 16,21"/>
                 </svg>
@@ -219,8 +206,6 @@ function ReportCard({ report, onCardClick }) {
               </span>
             </div>
           </div>
-
-          {/* Dot indicators */}
           {images.length > 1 && (
             <div style={{ position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, zIndex: 2 }}>
               {images.slice(0, 5).map((_, i) => (
@@ -243,35 +228,20 @@ function ReportCard({ report, onCardClick }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: '#a8a29e' }}>{formatDate(report.date)}</span>
             <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: '#c0392b', background: 'rgba(192,57,43,0.07)', padding: '2px 9px', borderRadius: 20 }}>BFP Cogon</span>
           </div>
-
           <p style={{ fontSize: 12, color: '#78716c', lineHeight: 1.75, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0, flex: 1 }}>
             {report.description}
           </p>
-
-          {/* "View X Photos" — ONLY shown when images > 1, opens lightbox */}
           {images.length > 1 ? (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
               style={{
-                marginTop: 4,
-                width: '100%',
-                padding: '10px 0',
-                borderRadius: 10,
+                marginTop: 4, width: '100%', padding: '10px 0', borderRadius: 10,
                 background: 'linear-gradient(135deg, #c0392b 0%, #e67e22 100%)',
-                color: 'white',
-                border: 'none',
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.07em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-                boxShadow: '0 4px 16px rgba(192,57,43,0.28)',
-                transition: 'opacity 0.18s',
+                color: 'white', border: 'none', fontSize: 11, fontWeight: 800,
+                letterSpacing: '0.07em', textTransform: 'uppercase', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                boxShadow: '0 4px 16px rgba(192,57,43,0.28)', transition: 'opacity 0.18s',
               }}
               onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; }}
               onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
@@ -279,7 +249,6 @@ function ReportCard({ report, onCardClick }) {
               <ImageIcon size={11} /> View {images.length} Photos
             </button>
           ) : (
-            /* Single image or no image — show "View in Slideshow" hint instead */
             <div style={{ marginTop: 4, width: '100%', padding: '9px 0', borderRadius: 10, background: 'rgba(192,57,43,0.06)', border: '1.5px dashed rgba(192,57,43,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c0392b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><polyline points="8,21 12,17 16,21"/>
@@ -309,7 +278,7 @@ function ReportsCarousel({ reports, onCardClick }) {
 
   useEffect(() => {
     if (!isPlaying || !canCycle) return;
-    autoRef.current = setInterval(() => advance(1), 5000);
+    autoRef.current = setInterval(() => advance(1), 30000);
     return () => clearInterval(autoRef.current);
   }, [isPlaying, canCycle, advance]);
 
@@ -328,7 +297,7 @@ function ReportsCarousel({ reports, onCardClick }) {
 
   if (!canCycle) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${total}, 1fr)`, gap: 22 }}>
+      <div className="hm-carousel-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${total}, 1fr)`, gap: 22 }}>
         {reports.map(r => <ReportCard key={r.id} report={r} onCardClick={onCardClick} />)}
       </div>
     );
@@ -344,7 +313,7 @@ function ReportsCarousel({ reports, onCardClick }) {
       </button>
 
       {/* Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 22 }}>
+      <div className="hm-carousel-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 22 }}>
         {visible.map((r, i) => (
           <div key={`${r.id}-${offset}-${i}`}
             style={{ animation: `cardSlideIn 0.42s cubic-bezier(0.22,1,0.36,1) both`, animationDelay: `${i * 55}ms` }}>
@@ -393,8 +362,8 @@ function ReportsCarousel({ reports, onCardClick }) {
 // ─── HomePage ─────────────────────────────────────────────────────────────────
 export function HomePage() {
   const [reports, setReports] = useState([]);
-  const slideshowRef  = useRef(null);   // ref to the slideshow section for scroll
-  const jumpToReportRef = useRef(null); // will hold the jumpToReportId fn from slideshow
+  const slideshowRef    = useRef(null);
+  const jumpToReportRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -414,16 +383,13 @@ export function HomePage() {
     load();
   }, []);
 
-  // Called by the carousel card — scroll to slideshow and switch to that report
   const handleCardClick = useCallback((reportId) => {
-    // 1. Scroll slideshow into view
     if (slideshowRef.current) {
       slideshowRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    // 2. After a short delay (let scroll start), jump slideshow to that report
     setTimeout(() => {
       if (jumpToReportRef.current) jumpToReportRef.current(reportId);
-    }, 120);
+    }, 1200);
   }, []);
 
   return (
@@ -464,11 +430,35 @@ export function HomePage() {
           box-shadow: 0 8px 24px rgba(192,57,43,0.38) !important;
         }
 
-        @media(max-width: 860px) {
-          #home-root .hm-svc-grid { grid-template-columns: 1fr 1fr !important }
+        /* ── Tablet (≤ 900px) ── */
+        @media (max-width: 900px) {
+          #home-root .hm-svc-grid { grid-template-columns: 1fr 1fr !important; }
+          #home-root .hm-carousel-grid { grid-template-columns: 1fr 1fr !important; }
+          #home-root .hm-hero-content { padding: 0 1.25rem 7rem !important; padding-top: 7rem !important; }
+          #home-root .hm-cta-banner-inner { flex-direction: column !important; align-items: flex-start !important; }
+          #home-root .hm-cta-banner-stats { border-left: none !important; border-top: 1px solid #ece6e0 !important; padding-top: 16px !important; margin-top: 8px !important; }
+          #home-root .carousel-arr { display: none !important; }
+          #home-root .hm-carousel-wrap { padding: 0 !important; }
         }
-        @media(max-width: 560px) {
-          #home-root .hm-svc-grid { grid-template-columns: 1fr !important }
+
+        /* ── Mobile (≤ 640px) ── */
+        @media (max-width: 640px) {
+          #home-root .hm-svc-grid { grid-template-columns: 1fr !important; }
+          #home-root .hm-carousel-grid { grid-template-columns: 1fr !important; }
+          #home-root .hm-hero-badges { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+          #home-root .hm-hero-btns { flex-direction: column !important; }
+          #home-root .hm-hero-btns a { justify-content: center !important; }
+          #home-root .hm-hero-stats { gap: 8px !important; }
+          #home-root .hm-hero-stats > div { padding: 12px 14px !important; }
+          #home-root .hm-updates-section { padding: 48px 1.25rem 60px !important; }
+          #home-root .hm-services-section { padding-top: 60px !important; padding-bottom: 72px !important; }
+          #home-root .hm-reports-header { flex-direction: column !important; align-items: flex-start !important; }
+        }
+
+        /* ── Small mobile (≤ 400px) ── */
+        @media (max-width: 400px) {
+          #home-root .hm-hero-stats { flex-wrap: wrap !important; }
+          #home-root .hm-hero-stats > div { flex: 1 1 calc(50% - 8px) !important; }
         }
       `}</style>
 
@@ -479,9 +469,9 @@ export function HomePage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(108deg,rgba(6,2,1,0.7) 0%,transparent 52%)' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: 'linear-gradient(to bottom,#c0392b 0%,#e67e22 55%,transparent 100%)', opacity: 0.9 }} />
 
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', padding: '0 2.5rem 10rem', paddingTop: '9rem', width: '100%' }}>
+        <div className="hm-hero-content" style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', padding: '0 2.5rem 10rem', paddingTop: '9rem', width: '100%' }}>
           <div style={{ maxWidth: 700 }}>
-            <div className="hm-f1" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 30, flexWrap: 'wrap' }}>
+            <div className="hm-f1 hm-hero-badges" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 30, flexWrap: 'wrap' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 15px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(12px)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'white' }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', animation: 'hm-pulseDot 2s ease-in-out infinite', flexShrink: 0 }} />
                 Station Operational · 24/7
@@ -503,7 +493,7 @@ export function HomePage() {
               and promoting fire safety awareness throughout Cagayan de Oro City.
             </p>
 
-            <div className="hm-f4" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 42 }}>
+            <div className="hm-f4 hm-hero-btns" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 42 }}>
               <Link to="/about" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontWeight: 700, fontSize: 13, padding: '13px 26px', borderRadius: 12, background: 'linear-gradient(135deg,#c0392b,#e64a11)', color: 'white', textDecoration: 'none', boxShadow: '0 6px 28px rgba(192,57,43,0.48)', letterSpacing: '0.02em' }}>
                 About Us <ArrowRight size={14} />
               </Link>
@@ -512,7 +502,7 @@ export function HomePage() {
               </a>
             </div>
 
-            <div className="hm-f5" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            <div className="hm-f5 hm-hero-stats" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {[
                 { value: '24/7', label: 'Response' },
                 { value: '911',  label: 'Emergency' },
@@ -534,10 +524,9 @@ export function HomePage() {
       </section>
 
       {/* ══ WEEKLY UPDATES ══ */}
-      <section style={{ background: '#f5f3f0', borderTop: '1px solid #e7e5e4' }}>
+      <section className="hm-updates-section" style={{ background: '#f5f3f0', borderTop: '1px solid #e7e5e4' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '72px 2.5rem 88px' }}>
 
-          {/* Centered header */}
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
               <span style={{ display: 'inline-block', width: 30, height: 2.5, background: 'linear-gradient(90deg,#c0392b,#e67e22)', borderRadius: 2 }} />
@@ -554,7 +543,6 @@ export function HomePage() {
             </p>
           </div>
 
-          {/* Slideshow — ref for scrollIntoView, onRegisterJump to get jumpFn */}
           <div ref={slideshowRef}>
             {reports.length > 0 ? (
               <WeeklyReportsSlideshow
@@ -572,10 +560,9 @@ export function HomePage() {
             )}
           </div>
 
-          {/* All Reports */}
           {reports.length > 0 && (
             <div style={{ marginTop: 60 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 10 }}>
+              <div className="hm-reports-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 4, height: 26, borderRadius: 2, background: 'linear-gradient(to bottom, #c0392b, #e67e22)' }} />
                   <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.65rem', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
@@ -587,7 +574,7 @@ export function HomePage() {
                 </span>
               </div>
 
-              <div style={{ padding: '0 30px' }}>
+              <div className="hm-carousel-wrap" style={{ padding: '0 30px' }}>
                 <ReportsCarousel reports={reports} onCardClick={handleCardClick} />
               </div>
             </div>
@@ -596,8 +583,8 @@ export function HomePage() {
       </section>
 
       {/* ══ CORE SERVICES ══ */}
-      <section style={{ background: 'white', borderTop: '1px solid #ece6e0', paddingTop: 92, paddingBottom: 100 }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 2rem' }}>
+      <section className="hm-services-section" style={{ background: 'white', borderTop: '1px solid #ece6e0', paddingTop: 92, paddingBottom: 100 }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 1.25rem' }}>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 60 }}>
             <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -633,9 +620,9 @@ export function HomePage() {
           {/* CTA Banner */}
           <div style={{ marginTop: 44, borderRadius: 18, overflow: 'hidden', background: 'white', border: '1px solid #e8e2dc', position: 'relative', boxShadow: '0 8px 40px rgba(0,0,0,0.06)' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,#8b1a0e,#c0392b,#e67e22)' }} />
-            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', fontFamily: "'Bebas Neue', sans-serif", fontSize: '12rem', lineHeight: 1, color: 'rgba(192,57,43,0.038)', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>BFP</div>
-            <div style={{ position: 'relative', zIndex: 1, padding: '36px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(5rem, 14vw, 12rem)', lineHeight: 1, color: 'rgba(192,57,43,0.038)', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>BFP</div>
+            <div className="hm-cta-banner-inner" style={{ position: 'relative', zIndex: 1, padding: '36px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 22, flex: 1, minWidth: 220 }}>
                 <div style={{ width: 62, height: 62, borderRadius: 16, background: 'linear-gradient(135deg,#8b1a0e,#c0392b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(192,57,43,0.3)', flexShrink: 0 }}>
                   <Flame size={27} style={{ color: 'white' }} />
                 </div>
@@ -647,7 +634,7 @@ export function HomePage() {
                   <p style={{ fontSize: 12, color: '#b0aaa6', fontWeight: 500 }}>BFP Station 1 · Cogon · Cagayan de Oro City · Region X</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexShrink: 0 }}>
+              <div className="hm-cta-banner-stats" style={{ display: 'flex', flexShrink: 0 }}>
                 {[
                   { label: 'Established', value: '1990',     icon: '📅' },
                   { label: 'Coverage',    value: '25+ Brgy.', icon: '📍' },

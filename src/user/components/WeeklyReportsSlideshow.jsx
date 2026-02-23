@@ -16,7 +16,7 @@ const getCatConfig = (cat) =>
 
 const RANK_ABBREVIATIONS = {
   'Chief Fire Officer': 'CFO', 'Chief Fire Inspector': 'CFI',
-  'Senior Fire Inspector': 'SFInsp', 'Fire Inspector': 'FInsp',
+  'Senior Fire Inspector': 'SFINSP', 'Fire Inspector': 'FInsp',
   'Senior Fire Officer III': 'SFO3', 'Senior Fire Officer II': 'SFO2',
   'Senior Fire Officer I': 'SFO1', 'Fire Officer III': 'FO3',
   'Fire Officer II': 'FO2', 'Fire Officer I': 'FO1',

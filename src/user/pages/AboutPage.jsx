@@ -5,8 +5,6 @@ export function AboutPage() {
   const images = ["/Wall.jpg"];
   const [currentIndex, setCurrentIndex] = useState(0);
 
-
-
   return (
     <div id="about-root" style={{ fontFamily: "'DM Sans', sans-serif", background: '#f5f3f0', width: '100%', position: 'relative', isolation: 'isolate', zIndex: 0 }}>
       <style>{`
@@ -93,6 +91,7 @@ export function AboutPage() {
           box-shadow: 0 12px 36px rgba(0,0,0,0.07); transform: translateY(-4px);
         }
 
+        /* ── Base responsive (tablet ≤ 900px) ── */
         @media (max-width: 900px) {
           #about-root .abt-2col { grid-template-columns: 1fr !important; }
           #about-root .abt-3col { grid-template-columns: 1fr !important; }
@@ -100,24 +99,56 @@ export function AboutPage() {
           #about-root .abt-svc-layout { grid-template-columns: 1fr !important; }
           #about-root .abt-cta-flex { flex-direction: column !important; align-items: flex-start !important; }
           #about-root .abt-cta-stats { flex-direction: row !important; gap: 20px !important; }
+          #about-root .abt-who-gap { gap: 40px !important; }
+          #about-root .abt-badge-fix { right: 0 !important; bottom: 0 !important; position: static !important; margin-top: 16px !important; align-self: flex-start; }
+          #about-root .abt-slideshow-wrap { padding-bottom: 0 !important; }
+          #about-root .abt-slideshow-inner { height: 320px !important; }
+          #about-root .abt-svc-grid { grid-template-columns: 1fr !important; }
+          #about-root .abt-stat-grid { grid-template-columns: 1fr 1fr !important; }
+          #about-root .abt-who-section { padding: 48px 0 !important; }
+          #about-root .abt-mvv-section { padding: 56px 0 !important; }
+          #about-root .abt-svc-section { padding: 48px 0 !important; }
+          #about-root .abt-cta-section { padding: 40px 0 48px !important; }
+          #about-root .abt-values-section { padding: 48px 0 !important; }
+          #about-root .abt-cta-inner { padding: 28px 24px !important; }
+        }
+
+        /* ── Mobile (≤ 600px) ── */
+        @media (max-width: 600px) {
+          #about-root .abt-4col { grid-template-columns: 1fr !important; }
+          #about-root .abt-stat-grid { grid-template-columns: 1fr 1fr !important; }
+          #about-root .abt-cta-stats { flex-direction: column !important; gap: 0 !important; }
+          #about-root .abt-cta-stats > div { border-left: none !important; border-top: 1px solid #ece6e0; padding: 12px 0 !important; }
+          #about-root .abt-cta-stats > div:first-child { border-top: none !important; }
+          #about-root .abt-svc-layout-inner { grid-template-columns: 1fr !important; }
+          #about-root .abt-hero-pad { padding: 40px 0 56px !important; }
+          #about-root .abt-who-section { padding: 36px 0 !important; }
+          #about-root .abt-mvv-section { padding: 40px 0 !important; }
+          #about-root .abt-cta-inner-flex { flex-direction: column !important; align-items: flex-start !important; }
+          #about-root .abt-cta-icon-text { gap: 14px !important; }
+          #about-root .abt-slideshow-inner { height: 240px !important; }
+          #about-root .abt-floating-badge { display: none !important; }
+        }
+
+        /* ── Small mobile (≤ 400px) ── */
+        @media (max-width: 400px) {
+          #about-root .abt-stat-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
-
       {/* ── HERO BANNER ── */}
-      <section style={{
+      <section className="abt-hero-pad" style={{
         position: 'relative',
         padding: '56px 0 82px',
         overflow: 'hidden',
         background: 'linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%)',
       }}>
-        {/* Grid overlay */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.1,
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)',
           backgroundSize: '40px 40px',
         }} />
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative', zIndex: 1, textAlign: 'center' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.25rem', position: 'relative', zIndex: 1, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
             <Flame size={16} style={{ color: 'rgba(255,255,255,0.7)' }} />
             <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.22em', margin: 0 }}>
@@ -141,9 +172,9 @@ export function AboutPage() {
       </section>
 
       {/* ── WHO WE ARE ── */}
-      <section style={{ background: 'white', padding: '84px 0', borderBottom: '1px solid #ece6e0' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 2rem' }}>
-          <div className="abt-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+      <section className="abt-who-section" style={{ background: 'white', padding: '84px 0', borderBottom: '1px solid #ece6e0' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
+          <div className="abt-2col abt-who-gap" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
 
             {/* Left */}
             <div>
@@ -173,7 +204,7 @@ export function AboutPage() {
                 ))}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 32 }}>
+              <div className="abt-stat-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 32 }}>
                 {[
                   { val: '24/7', label: 'Emergency Response', icon: '🚒' },
                   { val: '25+', label: 'Barangays Covered', icon: '📍' },
@@ -192,8 +223,8 @@ export function AboutPage() {
             </div>
 
             {/* Right: Slideshow */}
-            <div style={{ position: 'relative', paddingBottom: 28, }}>
-              <div style={{
+            <div className="abt-slideshow-wrap" style={{ position: 'relative', paddingBottom: 28 }}>
+              <div className="abt-slideshow-inner" style={{
                 borderRadius: 15, overflow: 'hidden', height: 480,
                 border: '1px solid #e4ddd8',
                 boxShadow: '0 24px 72px rgba(0,0,0,0.14)',
@@ -201,8 +232,9 @@ export function AboutPage() {
               }}>
                 {images.map((img, i) => (
                   <img key={i} src={img} alt={`BFP Station ${i + 1}`} style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'absolute',
+                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
                     opacity: currentIndex === i ? 1 : 0,
+                    transition: 'opacity 0.5s ease',
                   }} />
                 ))}
                 <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'linear-gradient(to top, rgba(10,5,3,0.6) 0%, transparent 55%)', pointerEvents: 'none' }} />
@@ -225,7 +257,7 @@ export function AboutPage() {
                 </div>
               </div>
               {/* Floating badge */}
-              <div style={{
+              <div className="abt-floating-badge" style={{
                 position: 'absolute', bottom: -10, right: -55,
                 background: 'linear-gradient(135deg, #c0392b 0%, #8b1a0e 100%)',
                 borderRadius: 14, padding: '18px 22px',
@@ -242,8 +274,8 @@ export function AboutPage() {
       </section>
 
       {/* ── CORE VALUES ── */}
-      <section style={{ background: '#f5f3f0', padding: '72px 0', borderBottom: '1px solid #e8e2dc' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 2rem' }}>
+      <section className="abt-values-section" style={{ background: '#f5f3f0', padding: '72px 0', borderBottom: '1px solid #e8e2dc' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
@@ -281,8 +313,8 @@ export function AboutPage() {
       </section>
 
       {/* ── MISSION / VISION / MANDATE ── */}
-      <section style={{ background: 'white', padding: '88px 0', borderBottom: '1px solid #ece6e0' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 2rem' }}>
+      <section className="abt-mvv-section" style={{ background: 'white', padding: '88px 0', borderBottom: '1px solid #ece6e0' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
@@ -314,7 +346,7 @@ export function AboutPage() {
                 iconBg: 'rgba(29,78,216,0.08)', iconBorder: 'rgba(29,78,216,0.18)',
                 badgeColor: '#1d4ed8', badgeBg: 'rgba(29,78,216,0.08)', badgeBorder: 'rgba(29,78,216,0.18)',
                 text: 'A modern fire service fully capable of ensuring a fire-safe nation by 2034.',
-              },  
+              },
               {
                 icon: <FileText size={22} style={{ color: '#1e3a5f' }} />,
                 label: 'Our Mandate', badge: 'RA 9514',
@@ -329,7 +361,7 @@ export function AboutPage() {
                 <div style={{ width: 52, height: 52, borderRadius: 14, marginBottom: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: iconBg, border: `1.5px solid ${iconBorder}` }}>
                   {icon}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.45rem', letterSpacing: '0.04em', color: '#1a1714' }}>{label}</span>
                   <span style={{ fontSize: 9, fontWeight: 800, color: badgeColor, textTransform: 'uppercase', letterSpacing: '0.1em', background: badgeBg, border: `1px solid ${badgeBorder}`, padding: '2px 9px', borderRadius: 999 }}>{badge}</span>
                 </div>
@@ -342,22 +374,22 @@ export function AboutPage() {
       </section>
 
       {/* ── SERVICES ── */}
-      <section style={{ background: '#f5f3f0', padding: '80px 0', borderBottom: '1px solid #e8e2dc' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 2rem' }}>
+      <section className="abt-svc-section" style={{ background: '#f5f3f0', padding: '80px 0', borderBottom: '1px solid #e8e2dc' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div className="abt-svc-layout" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 64, alignItems: 'start' }}>
             <div>
               <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ display: 'inline-block', width: 22, height: 2, background: '#c0392b', borderRadius: 2 }} />
                 What We Do
               </p>
-              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.6rem', letterSpacing: '0.05em', lineHeight: 1, color: '#1a1714', marginBottom: 14 }}>
+              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(2rem, 4vw, 2.6rem)', letterSpacing: '0.05em', lineHeight: 1, color: '#1a1714', marginBottom: 14 }}>
                 Our Core<br />Services
               </h2>
               <p style={{ fontSize: 13, lineHeight: 1.78, color: '#8a827e', margin: 0 }}>
                 From prevention to suppression, BFP Station 1 delivers comprehensive fire protection to every community under its jurisdiction.
               </p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="abt-svc-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               {[
                 { icon: <Flame size={19} />, title: 'Fire Prevention & Inspection', desc: 'Systematic safety inspections of residential, commercial, and industrial properties.', accent: '#c0392b', bg: 'rgba(192,57,43,0.07)', border: 'rgba(192,57,43,0.15)' },
                 { icon: <ShieldCheck size={19} />, title: '24/7 Emergency Response', desc: 'Round-the-clock standby with rapid dispatch and professional suppression teams.', accent: '#b45309', bg: 'rgba(180,83,9,0.07)', border: 'rgba(180,83,9,0.15)' },
@@ -377,26 +409,22 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* ── BOTTOM CTA — White/Red ── */}
-      <section style={{ background: '#f5f3f0', padding: '64px 0 72px' }}>
-        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 2rem' }}>
+      {/* ── BOTTOM CTA ── */}
+      <section className="abt-cta-section" style={{ background: '#f5f3f0', padding: '64px 0 72px' }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div style={{
             borderRadius: 20, background: 'white',
             border: '1px solid #e8e2dc',
             overflow: 'hidden', position: 'relative',
             boxShadow: '0 8px 48px rgba(0,0,0,0.07)',
           }}>
-            {/* Top red stripe */}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #8b1a0e, #c0392b, #e67e22)' }} />
-            {/* Subtle grid texture */}
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.022, backgroundImage: 'linear-gradient(rgba(192,57,43,1) 1px, transparent 1px), linear-gradient(90deg, rgba(192,57,43,1) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-            {/* Watermark */}
-            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', fontFamily: "'Bebas Neue', sans-serif", fontSize: '13rem', lineHeight: 1, letterSpacing: '0.04em', color: 'rgba(192,57,43,0.038)', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>BFP</div>
-            {/* Circle accents */}
+            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(6rem, 15vw, 13rem)', lineHeight: 1, letterSpacing: '0.04em', color: 'rgba(192,57,43,0.038)', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap' }}>BFP</div>
             <div style={{ position: 'absolute', left: -70, top: -70, width: 260, height: 260, borderRadius: '50%', border: '44px solid rgba(192,57,43,0.05)', pointerEvents: 'none' }} />
 
-            <div className="abt-cta-flex" style={{ position: 'relative', zIndex: 1, padding: '40px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, minWidth: 260 }}>
+            <div className="abt-cta-flex abt-cta-inner" style={{ position: 'relative', zIndex: 1, padding: '40px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 28 }}>
+              <div className="abt-cta-icon-text" style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, minWidth: 260 }}>
                 <div style={{
                   width: 68, height: 68, borderRadius: 18, flexShrink: 0,
                   background: 'linear-gradient(135deg, #8b1a0e, #c0392b)',

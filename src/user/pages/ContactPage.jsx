@@ -53,14 +53,11 @@ function ContactCard({ icon, label, value, href, description, accent = "#c0392b"
         transform: hov ? 'translateY(-5px)' : 'none',
         transition: 'all 0.24s ease',
       }}>
-      {/* Top color strip */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: 3,
         background: `linear-gradient(90deg, ${accent}, ${accent}70)`,
         opacity: hov ? 1 : 0, transition: 'opacity 0.22s',
       }} />
-
-      {/* Icon */}
       <div style={{
         width: 48, height: 48, borderRadius: 14,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -71,11 +68,9 @@ function ContactCard({ icon, label, value, href, description, accent = "#c0392b"
       }}>
         {icon}
       </div>
-
       <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#c4b5b0', marginBottom: 6 }}>{label}</p>
       <p style={{ fontWeight: 700, fontSize: 15, color: '#1c1917', lineHeight: 1.35, marginBottom: 4, wordBreak: 'break-word' }}>{value || '—'}</p>
       {description && <p style={{ fontSize: 11.5, color: '#a8a29e', lineHeight: 1.6 }}>{description}</p>}
-
       {href && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 14, color: accent, fontSize: 11, fontWeight: 700, opacity: hov ? 1 : 0, transform: hov ? 'translateX(0)' : 'translateX(-6px)', transition: 'all 0.22s' }}>
           <span>View</span>
@@ -168,17 +163,52 @@ export function ContactPage() {
         .ticker-inner { animation: ticker 30s linear infinite; white-space: nowrap; display: flex; gap: 0; }
         .ticker-inner:hover { animation-play-state: paused; }
         a { text-decoration: none; color: inherit; }
+
+        /* ── Tablet (≤ 900px) ── */
+        @media (max-width: 900px) {
+          .ct-cards-grid { grid-template-columns: 1fr 1fr !important; }
+          .ct-hero-stats { gap: 8px !important; }
+          .ct-911-card { flex-direction: column !important; align-items: flex-start !important; gap: 20px !important; }
+          .ct-911-actions { align-items: flex-start !important; }
+          .ct-bottom-grid { grid-template-columns: 1fr !important; }
+          .ct-hero-pad { padding-top: 52px !important; padding-bottom: 68px !important; }
+          .ct-section-pad { padding: 0 1.25rem !important; }
+          .ct-barangay-section { padding: 28px 24px !important; }
+        }
+
+        /* ── Mobile (≤ 640px) ── */
+        @media (max-width: 640px) {
+          .ct-cards-grid { grid-template-columns: 1fr !important; }
+          .ct-hero-h1 { font-size: clamp(3rem, 10vw, 5rem) !important; }
+          .ct-hero-stats { flex-wrap: wrap !important; }
+          .ct-hero-stat-chip { flex: 1 1 calc(50% - 8px) !important; }
+          .ct-hero-badges { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+          .ct-911-number { font-size: 3rem !important; }
+          .ct-map-area { height: 220px !important; }
+          .ct-address-row { flex-direction: column !important; align-items: flex-start !important; gap: 14px !important; }
+          .ct-address-row a { width: 100% !important; justify-content: center !important; }
+          .ct-cta-dark { padding: 20px 20px !important; }
+          .ct-cta-dark-btns { flex-wrap: wrap !important; }
+          .ct-barangay-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .ct-hero-pad { padding-top: 40px !important; padding-bottom: 52px !important; }
+          .ct-lifted-card-inner { padding: 20px 18px !important; }
+        }
+
+        /* ── Small mobile (≤ 420px) ── */
+        @media (max-width: 420px) {
+          .ct-hero-stat-chip { flex: 1 1 100% !important; }
+          .ct-911-number { font-size: 2.5rem !important; }
+        }
       `}</style>
 
-      {/* ══════════════ HERO ══════════════ */}
-      <section style={{
+      {/* ══ HERO ══ */}
+      <section className="ct-hero-pad" style={{
         position: 'relative',
         background: 'linear-gradient(135deg, #991b0f 0%, #7a1212 50%, #c0392b 100%)',
         overflow: 'hidden',
         paddingTop: 72, paddingBottom: 88,
         opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease',
       }}>
-        {/* Grid texture */}
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.08,
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)',
@@ -187,9 +217,8 @@ export function ContactPage() {
         <div style={{ position: 'absolute', right: -60, top: -60, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.05))' }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative', zIndex: 10 }}>
-          {/* Status badge */}
-          <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
+          <div className="ct-hero-badges" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.22)' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', flexShrink: 0, animation: 'pulseDot 2s ease-in-out infinite' }} />
               <span style={{ fontSize: 10, fontWeight: 700, color: 'white', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Emergency Services Active</span>
@@ -200,9 +229,9 @@ export function ContactPage() {
             </div>
           </div>
 
-          <h1 style={{
+          <h1 className="ct-hero-h1" style={{
             fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: 'clamp(4rem, 9vw, 7.5rem)',
+            fontSize: 'clamp(3.5rem, 9vw, 7.5rem)',
             letterSpacing: '0.05em', lineHeight: 0.9,
             color: 'white', marginBottom: 22,
           }}>
@@ -215,14 +244,13 @@ export function ContactPage() {
             Prepared. Responsive. Committed to your safety.
           </p>
 
-          {/* Stat chips */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          <div className="ct-hero-stats" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
             {[
               { val: '911', label: 'Emergency' },
               { val: '24/7', label: 'Response' },
               { val: '25+', label: 'Barangays' },
             ].map(({ val, label }) => (
-              <div key={label} style={{ padding: '12px 20px', borderRadius: 14, textAlign: 'center', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)' }}>
+              <div key={label} className="ct-hero-stat-chip" style={{ padding: '12px 20px', borderRadius: 14, textAlign: 'center', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)' }}>
                 <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: '0.06em', color: 'white', lineHeight: 1 }}>{val}</p>
                 <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{label}</p>
               </div>
@@ -231,20 +259,18 @@ export function ContactPage() {
         </div>
       </section>
 
-
-
-      {/* ══════════════ 911 LIFTED CARD ══════════════ */}
-      <div style={{ maxWidth: 1200, margin: '-36px auto 0', padding: '0 2rem', position: 'relative', zIndex: 20 }}>
+      {/* ══ 911 LIFTED CARD ══ */}
+      <div className="ct-section-pad" style={{ maxWidth: 1200, margin: '-36px auto 0', padding: '0 2rem', position: 'relative', zIndex: 20 }}>
         <div style={{ borderRadius: 20, overflow: 'hidden', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 16px 48px rgba(192,57,43,0.14)' }}>
           <div style={{ height: 3, background: 'linear-gradient(90deg, #c0392b, #e67e22, #f39c12)' }} />
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '28px 36px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div className="ct-911-card ct-lifted-card-inner" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '28px 36px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
               <div style={{ width: 64, height: 64, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(192,57,43,0.08)', border: '1.5px solid rgba(192,57,43,0.18)' }}>
                 <Phone size={26} style={{ color: '#c0392b' }} />
               </div>
               <div>
                 <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#c0392b', marginBottom: 4 }}>National Emergency Hotline</p>
-                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '4.5rem', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
+                <p className="ct-911-number" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '4.5rem', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
                   {contact.nationalEmergency || "911"}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6 }}>
@@ -254,7 +280,7 @@ export function ContactPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
+            <div className="ct-911-actions" style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
               <a href={`tel:${contact.nationalEmergency || "911"}`}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -274,9 +300,9 @@ export function ContactPage() {
         </div>
       </div>
 
-      {/* ══════════════ CONTACT CARDS ══════════════ */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 2rem 0' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      {/* ══ CONTACT CARDS ══ */}
+      <section className="ct-section-pad" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 2rem 0' }}>
+        <div className="ct-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           <ContactCard
             label="Local Station Hotline"
             value={contact.localHotline}
@@ -335,24 +361,20 @@ export function ContactPage() {
         </div>
       </section>
 
-      {/* ══════════════ LOCATION + MAP ══════════════ */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 0' }}>
+      {/* ══ LOCATION + MAP ══ */}
+      <section className="ct-section-pad" style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 0' }}>
         <div style={{ borderRadius: 20, overflow: 'hidden', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
           {/* Map area */}
-          <div style={{ position: 'relative', height: 320, background: '#1a1a1a', overflow: 'hidden' }}>
+          <div className="ct-map-area" style={{ position: 'relative', height: 320, background: '#1a1a1a', overflow: 'hidden' }}>
             <img
               src="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=124.6466,8.4794,124.6482,8.4808&bboxSR=4326&imageSR=4326&size=1200,400&format=png&f=image"
               alt="BFP Cogon Fire Station Satellite Map"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
             />
-            {/* Map tint */}
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.12)' }} />
-
-            {/* Top gradient for elegance */}
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), transparent)' }} />
 
-            {/* Map label top left */}
             <div style={{
               position: 'absolute', top: 16, left: 16,
               display: 'flex', alignItems: 'center', gap: 8,
@@ -364,70 +386,26 @@ export function ContactPage() {
             </div>
 
             {/* Location Pin */}
-            <div
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -100%)',
-                pointerEvents: 'none',
-              }}
-            >
-              <div
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                {/* Pin body */}
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50% 50% 50% 0',
-                    transform: 'rotate(-45deg)',
-                    background: '#c0392b', // solid = more professional
-                    boxShadow:
-                      '0 8px 22px rgba(0,0,0,0.35), 0 0 0 4px rgba(192,57,43,0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {/* Center dot */}
-                  <div
-                    style={{
-                      width: 10,
-                      height: 10,
-                      background: 'white',
-                      borderRadius: '50%',
-                      transform: 'rotate(45deg)',
-                    }}
-                  />
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -100%)', pointerEvents: 'none' }}>
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50% 50% 50% 0',
+                  transform: 'rotate(-45deg)',
+                  background: '#c0392b',
+                  boxShadow: '0 8px 22px rgba(0,0,0,0.35), 0 0 0 4px rgba(192,57,43,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ width: 10, height: 10, background: 'white', borderRadius: '50%', transform: 'rotate(45deg)' }} />
                 </div>
-
-                {/* Ground shadow */}
-                <div
-                  style={{
-                    marginTop: 6,
-                    width: 14,
-                    height: 5,
-                    borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.35)',
-                    filter: 'blur(3px)',
-                  }}
-                />
+                <div style={{ marginTop: 6, width: 14, height: 5, borderRadius: '50%', background: 'rgba(0,0,0,0.35)', filter: 'blur(3px)' }} />
               </div>
             </div>
 
-            {/* Bottom gradient */}
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 64, background: 'linear-gradient(to top, rgba(0,0,0,0.35), transparent)' }} />
           </div>
 
           {/* Address row */}
-          <div style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', borderTop: '1.5px solid #f0ebe7' }}>
+          <div className="ct-address-row" style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', borderTop: '1.5px solid #f0ebe7' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(192,57,43,0.07)', border: '1.5px solid rgba(192,57,43,0.14)' }}>
                 <MapPin size={18} style={{ color: '#c0392b' }} />
@@ -455,19 +433,18 @@ export function ContactPage() {
         </div>
       </section>
 
-      {/* ══════════════ BARANGAYS ══════════════ */}
+      {/* ══ BARANGAYS ══ */}
       {contact.barangays.length > 0 && (
-        <section style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 0' }}>
-          <div style={{ borderRadius: 20, padding: '36px 32px', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <section className="ct-section-pad" style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 0' }}>
+          <div className="ct-barangay-section" style={{ borderRadius: 20, padding: '36px 32px', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+            <div className="ct-barangay-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                   <div style={{ width: 20, height: 2, background: '#c0392b', borderRadius: 2 }} />
                   <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#c0392b' }}>Coverage Area</span>
                 </div>
-                <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
+                <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
                   Barangays Under Jurisdiction
                 </h2>
               </div>
@@ -479,7 +456,6 @@ export function ContactPage() {
               </div>
             </div>
 
-            {/* Divider */}
             <div style={{ height: 1, background: '#f0ebe7', marginBottom: 20 }} />
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -489,9 +465,9 @@ export function ContactPage() {
         </section>
       )}
 
-      {/* ══════════════ SAFETY NOTICE + CTA ══════════════ */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 80px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      {/* ══ SAFETY NOTICE + CTA ══ */}
+      <section className="ct-section-pad" style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 80px' }}>
+        <div className="ct-bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
           {/* Safety notice */}
           <div style={{ display: 'flex', gap: 16, padding: '24px', borderRadius: 18, background: 'rgba(217,119,6,0.05)', border: '1.5px solid rgba(217,119,6,0.18)' }}>
@@ -508,7 +484,7 @@ export function ContactPage() {
           </div>
 
           {/* Quick CTA */}
-          <div style={{
+          <div className="ct-cta-dark" style={{
             borderRadius: 18, overflow: 'hidden',
             background: 'linear-gradient(135deg, #1c1917 0%, #292524 100%)',
             border: '1px solid #3d3533',
@@ -519,12 +495,12 @@ export function ContactPage() {
             <div style={{ position: 'absolute', right: -30, bottom: -30, width: 140, height: 140, borderRadius: '50%', border: '24px solid rgba(192,57,43,0.1)', pointerEvents: 'none' }} />
             <div>
               <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#e67e22', marginBottom: 6 }}>Bureau of Fire Protection</p>
-              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: '0.04em', color: 'white', lineHeight: 1, marginBottom: 6 }}>
+              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(1.3rem, 3vw, 1.6rem)', letterSpacing: '0.04em', color: 'white', lineHeight: 1, marginBottom: 6 }}>
                 Station 1 · Cogon · CDO
               </h3>
               <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', fontWeight: 500 }}>Protecting lives & properties since 1990 · Region X · DILG</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
+            <div className="ct-cta-dark-btns" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
               <a href={`tel:${contact.nationalEmergency || "911"}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg, #c0392b, #e64a11)', color: 'white', fontWeight: 700, fontSize: 12, letterSpacing: '0.04em' }}>
                 <Phone size={13} /> Call 911
               </a>

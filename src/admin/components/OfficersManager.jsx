@@ -429,7 +429,7 @@ export function OfficersManager() {
                 <col style={{ width:'15%' }} />{/* Rank */}
                 <col style={{ width:'10%' }} />{/* Category */}
                 <col style={{ width:'25%' }} />{/* Role */}
-                <col style={{ width:'13%' }} />{/* Contact */}
+                <col style={{ width:'20%' }} />{/* Contact */}
                 <col style={{ width:'11%' }} />{/* Account */}
                 <col style={{ width:'15%' }}  />{/* Birthdate */}
                 <col style={{ width:'5%' }}  />{/* Actions */}
