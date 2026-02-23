@@ -424,28 +424,6 @@ function ReportSlide({ report, isAutoPlaying, onLightboxChange }) {
           {/* Spacer pushes footer to bottom */}
           <div style={{ flex: 1 }} />
 
-          {/* View photo button — anchored at bottom */}
-          {images.length > 0 && (
-            <button type="button" onClick={() => { setLightboxStart(0); setLightboxOpen(true); }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '13px 22px', borderRadius: 10,
-                background: 'linear-gradient(135deg, #c0392b, #e2711a)',
-                border: 'none', color: 'white',
-                fontSize: 12, fontWeight: 800,
-                cursor: 'pointer', textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                boxShadow: '0 4px 18px rgba(192,57,43,0.32)',
-                fontFamily: "'Lato', sans-serif",
-                marginBottom: 20,
-                width: '100%',
-                transition: 'opacity 0.18s',
-              }}>
-              <Maximize2 size={13} />
-              {images.length > 1 ? `View all ${images.length} photos` : 'View photo'}
-            </button>
-          )}
-
           {/* Footer tag */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingTop: 16, borderTop: '1px solid #f0ece8' }}>
             <Tag size={10} style={{ color: '#d4ccc7', flexShrink: 0 }} />

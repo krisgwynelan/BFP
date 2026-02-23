@@ -455,11 +455,11 @@ export function ContactManager() {
             style={{ background: 'rgba(192,57,43,0.04)', border: '1.5px solid rgba(192,57,43,0.12)' }}>
             <AlertCircle size={13} style={{ color: '#c0392b', marginTop: 1, flexShrink: 0 }} />
             <p className="text-xs leading-relaxed" style={{ color: '#78716c' }}>
-              Data is stored in <strong>Firebase Firestore</strong> under the{' '}
+              Data is stored. <strong></strong> {' '}
               <code style={{ background: '#f5ede9', padding: '1px 5px', borderRadius: '4px', color: '#c0392b', fontSize: '11px' }}>
-                settings/contact
+                
               </code>{' '}
-              document. The public <strong>Contact page</strong> polls Firebase every 5 seconds, so updates appear shortly after saving.
+              
             </p>
           </div>
         </div>

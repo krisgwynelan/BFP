@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Plus, Edit, Trash2, X, FileText, Calendar,
   ChevronLeft, ChevronRight, Image as ImageIcon,
@@ -10,19 +11,17 @@ import { getWeeklyReports, saveWeeklyReport, deleteWeeklyReport } from '../../ut
 import { toast } from 'sonner';
 
 // ─── Z-index layers ────────────────────────────────────────────────────────────
-// FormModal   → backdrop: 999990 / dialog: 999991
-// DeleteModal → backdrop: 999992 / dialog: 999993  ← always on top
+// Both modals are rendered via React portals directly into document.body,
+// so overflow:auto / transform / will-change stacking contexts in the dashboard
+// can NEVER trap them. Z-indices only need to be high enough relative to each other.
 const Z = {
-  formBackdrop:   999990,
-  formDialog:     999991,
-  deleteBackdrop: 999992,
-  deleteDialog:   999993,
+  formBackdrop:   99990,
+  formDialog:     99991,
+  deleteBackdrop: 99992,
+  deleteDialog:   99993,
 };
 
 // ─── Image compression ────────────────────────────────────────────────────────
-// Firestore documents have a 1 MB limit. Raw base64 images easily exceed this.
-// This compresses each image to a max dimension of 1200px and 0.82 JPEG quality
-// before saving — keeping file sizes well within limits.
 function compressImage(dataUrl, maxDim = 1200, quality = 0.82) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -38,7 +37,7 @@ function compressImage(dataUrl, maxDim = 1200, quality = 0.82) {
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
-    img.onerror = () => resolve(dataUrl); // fallback: keep original if compression fails
+    img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
   });
 }
@@ -117,7 +116,6 @@ function ImageUploader({ images, onChange }) {
     Array.from(e.target.files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
-        // Compress immediately on upload so the preview is also the compressed version
         compressImage(reader.result).then(compressed => {
           onChange((prev) => [...prev, compressed]);
         });
@@ -220,6 +218,9 @@ function CardImages({ images }) {
 }
 
 // ─── Form Modal ───────────────────────────────────────────────────────────────
+// Uses createPortal → renders directly into document.body.
+// This escapes any CSS stacking context (overflow, transform, will-change)
+// that the dashboard layout might create, so position:fixed works correctly.
 function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onClose }) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -232,7 +233,7 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
     return () => window.removeEventListener('keydown', fn);
   }, [saving, onClose]);
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -245,10 +246,7 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
         }}
       />
 
-      {/* Dialog
-          • maxHeight (not height) — grows with content, capped at viewport
-          • overflow: hidden — clips border-radius; body child handles its own scroll
-      */}
+      {/* Dialog */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -264,13 +262,13 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          fontFamily: 'inherit',
+          fontFamily: "'DM Sans', sans-serif",
         }}
       >
-        {/* Top gradient stripe — never shrinks */}
+        {/* Top gradient stripe */}
         <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,#c0392b 0%,#e67e22 55%,#f39c12 100%)' }} />
 
-        {/* Header — flexShrink:0 keeps it always fully visible */}
+        {/* Header */}
         <div style={{
           flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -297,15 +295,10 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
           </button>
         </div>
 
-        {/* Body
-            • flex: 1 1 0  — fills space between header & footer
-            • minHeight: 0 — CRITICAL: allows flex child to shrink so header/footer
-              are never pushed out of view. Default min-height:auto breaks this.
-            • overflowY: auto — scroll only when content overflows
-        */}
+        {/* Body — flex:1 + minHeight:0 lets header/footer stay visible while this scrolls */}
         <div style={{
           flex: '1 1 0',
-          minHeight: 400,
+          minHeight: 550,
           overflowY: 'auto',
           overflowX: 'hidden',
           padding: '20px 26px',
@@ -361,7 +354,7 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
           </form>
         </div>
 
-        {/* Footer — flexShrink:0 keeps it always fully visible */}
+        {/* Footer */}
         <div style={{
           flexShrink: 0,
           padding: '15px 26px 20px',
@@ -392,11 +385,13 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
 // ─── Delete Confirmation Modal ────────────────────────────────────────────────
+// Also portaled to document.body — always renders above everything.
 function DeleteModal({ report, onConfirm, onCancel, deleting }) {
   const images = getImages(report);
 
@@ -412,9 +407,9 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
     return () => window.removeEventListener('keydown', fn);
   }, [deleting, onCancel]);
 
-  return (
+  return createPortal(
     <>
-      {/* Backdrop — higher z than FormModal so it fully covers it */}
+      {/* Backdrop */}
       <div
         onClick={() => { if (!deleting) onCancel(); }}
         style={{
@@ -425,7 +420,7 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
         }}
       />
 
-      {/* Dialog — highest z-index of all */}
+      {/* Dialog */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -438,7 +433,7 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
           background: 'white',
           animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          fontFamily: 'inherit',
+          fontFamily: "'DM Sans', sans-serif",
         }}
       >
         {/* Top gradient stripe */}
@@ -529,7 +524,8 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -571,8 +567,6 @@ export function WeeklyReportsManager() {
     if (formData.images.length === 0) { toast.error('Please upload at least one image!'); return; }
     setSaving(true);
     try {
-      // Images are already compressed on upload, but compress once more
-      // as a safety pass in case any raw images slipped through
       const compressedImages = await compressAll(formData.images);
 
       const payload = {
@@ -597,7 +591,6 @@ export function WeeklyReportsManager() {
       resetForm();
     } catch (err) {
       console.error('[WeeklyReports] save failed:', err);
-      // Show the actual error message so the user knows what went wrong
       const msg = err?.message || 'Unknown error';
       toast.error(`Failed to save: ${msg}`);
     } finally { setSaving(false); }
@@ -742,7 +735,7 @@ export function WeeklyReportsManager() {
         </div>
       )}
 
-      {/* Form Modal */}
+      {/* Form Modal — portaled to document.body to escape dashboard stacking contexts */}
       {isFormOpen && (
         <FormModal
           editingReport={editingReport}
@@ -754,7 +747,7 @@ export function WeeklyReportsManager() {
         />
       )}
 
-      {/* Delete Modal — rendered last in DOM + higher z-indices = always on top */}
+      {/* Delete Modal — portaled to document.body, always on top */}
       {deleteTarget && (
         <DeleteModal
           report={deleteTarget}

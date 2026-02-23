@@ -73,15 +73,15 @@ export function Footer() {
             {/* Brand */}
             <div className="ft-brand-col">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  background: 'linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%)',
-                  flexShrink: 0,
-                }}>
-                  <img src="/CDO.jpg" alt="Cagayan de Oro City" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden',
+                background: 'transparent',
+                flexShrink: 0,
+              }}>
+                <img src="/CDO.png" alt="Cagayan de Oro City" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
                 <div>
                   <p style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.07em', color: '#1c1917', fontSize: '1rem', fontWeight: 900, lineHeight: 1 }}>BFP Station 1</p>
                   <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#c0392b', margin: '2px 0 0' }}>Cogon, CDO</p>

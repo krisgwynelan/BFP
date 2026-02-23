@@ -5,7 +5,7 @@ import bgFire from "/Fire.jpg";
 import Logo from "/BFP.jpg";
 import { Eye, EyeOff, Shield, AlertTriangle, Info, Lock, ArrowLeft, Flame } from "lucide-react";
 
-const DEFAULT_ADMIN_PASSWORD = "admin123";
+const DEFAULT_ADMIN_PASSWORD = "bfpcogon1234";
 const getStoredPassword = () => localStorage.getItem("bfp_admin_password") || DEFAULT_ADMIN_PASSWORD;
 
 export function AdminLogin() {
