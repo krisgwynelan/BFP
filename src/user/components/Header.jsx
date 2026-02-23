@@ -90,8 +90,6 @@ export function Header() {
                     className="w-12 h-12 rounded-full object-cover"
                     style={{ border: '2.5px solid #c0392b', boxShadow: '0 2px 8px rgba(192,57,43,0.2)' }}
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-white"
-                    style={{ animation: 'pulseDot 2s ease-in-out infinite' }} />
                 </div>
                 <div>
                   <p className="font-black text-[15px] leading-tight group-hover:text-red-700 transition-colors"

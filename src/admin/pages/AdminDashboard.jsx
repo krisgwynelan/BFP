@@ -230,13 +230,6 @@ export function AdminDashboard() {
           <div className="flex-1" />
 
           <div className="flex items-center gap-2 px-4">
-            <button onClick={() => navigate('/')}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg"
-              style={{ fontSize: 12, fontWeight: 600, color: '#9c7b74', background: 'none', border: 'none', cursor: 'pointer', transition: 'all 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#c0392b'; e.currentTarget.style.background = 'rgba(192,57,43,0.06)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = '#9c7b74'; e.currentTarget.style.background = 'none'; }}>
-              <ExternalLink size={13} /> Public Site
-            </button>
             <button onClick={() => setShowLogoutConfirm(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg"
               style={{ fontSize: 12, fontWeight: 700, background: '#fff0ed', border: '1.5px solid #f5cac0', color: '#c0392b', cursor: 'pointer', transition: 'all 0.15s' }}
@@ -285,8 +278,8 @@ export function AdminDashboard() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
               {[
-                { label: 'Total Officers',       value: stats.officers, max: 30, color: '#c0392b', bg: '#fff5f3', stripe: 'linear-gradient(90deg,#c0392b,#e74c3c)', icon: Users,    sub: 'Active Personnel' },
-                { label: 'Weekly Reports Filed', value: stats.reports,  max: 52, color: '#d35400', bg: '#fff8f3', stripe: 'linear-gradient(90deg,#d35400,#e67e22)', icon: FileText, sub: 'Reports Published' },
+                { label: 'Total Officers',       value: stats.officers, max: 100, color: '#c0392b', bg: '#fff5f3', stripe: 'linear-gradient(90deg,#c0392b,#e74c3c)', icon: Users,    sub: 'Active Personnel' },
+                { label: 'Weekly Reports Filed', value: stats.reports,  max: 1000, color: '#d35400', bg: '#fff8f3', stripe: 'linear-gradient(90deg,#d35400,#e67e22)', icon: FileText, sub: 'Reports Published' },
                 { label: 'Station Status', isStatus: true, color: '#16a34a', bg: '#f0fdf4', stripe: 'linear-gradient(90deg,#16a34a,#22c55e)', icon: Shield, sub: 'All Systems Normal' },
               ].map(({ label, value, max, color, bg, stripe, icon: Icon, sub, isStatus }) => (
                 <div key={label} className="stat-card p-6">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
-  Phone, Mail, MapPin, Globe, Clock, AlertTriangle,
-  Facebook, ExternalLink, Shield
+  Phone, Mail, MapPin, Clock, AlertTriangle,
+  Facebook, ExternalLink, Shield, Flame, ChevronRight
 } from "lucide-react";
 import { getContactInfo } from "../../utils/storage";
 
@@ -36,31 +36,6 @@ function normalise(raw) {
   };
 }
 
-function LiveBadge() {
-  return (
-    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest"
-      style={{ background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", color: "white" }}>
-      <span className="w-2 h-2 rounded-full bg-green-300" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
-      Emergency Services Active
-    </span>
-  );
-}
-
-function StatBlock({ value, label, accent }) {
-  return (
-    <div className="text-center px-5 py-4 rounded-xl"
-      style={{ background: "rgba(255,255,255,0.13)", border: "1px solid rgba(255,255,255,0.22)", minWidth: "100px" }}>
-      <p className="font-black text-2xl leading-none"
-        style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.06em", color: accent || "white" }}>
-        {value}
-      </p>
-      <p className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>
-        {label}
-      </p>
-    </div>
-  );
-}
-
 function ContactCard({ icon, label, value, href, description, accent = "#c0392b" }) {
   const [hov, setHov] = useState(false);
 
@@ -68,30 +43,51 @@ function ContactCard({ icon, label, value, href, description, accent = "#c0392b"
     <div
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className="relative overflow-hidden rounded-2xl h-full p-6 cursor-default"
       style={{
-        background: "white",
-        border: `1.5px solid ${hov ? accent + "50" : "#f0e8e5"}`,
-        boxShadow: hov ? `0 12px 32px ${accent}20` : "0 2px 8px rgba(0,0,0,0.04)",
-        transform: hov ? "translateY(-4px)" : "none",
-        transition: "all 0.22s ease",
+        position: 'relative', overflow: 'hidden',
+        borderRadius: 18, height: '100%', padding: '28px 24px',
+        cursor: href ? 'pointer' : 'default',
+        background: 'white',
+        border: `1.5px solid ${hov ? accent + '45' : '#ede8e4'}`,
+        boxShadow: hov ? `0 16px 40px ${accent}18` : '0 2px 8px rgba(0,0,0,0.04)',
+        transform: hov ? 'translateY(-5px)' : 'none',
+        transition: 'all 0.24s ease',
       }}>
-      <div className="absolute top-0 left-0 right-0 h-[3px]"
-        style={{ background: `linear-gradient(90deg, ${accent}, ${accent}80)`, opacity: hov ? 1 : 0, transition: "opacity 0.2s" }} />
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-        style={{ background: hov ? `${accent}18` : "rgba(192,57,43,0.06)", border: `1.5px solid ${hov ? accent + "30" : "#f0e8e5"}`, color: accent, transition: "all 0.2s" }}>
+      {/* Top color strip */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+        background: `linear-gradient(90deg, ${accent}, ${accent}70)`,
+        opacity: hov ? 1 : 0, transition: 'opacity 0.22s',
+      }} />
+
+      {/* Icon */}
+      <div style={{
+        width: 48, height: 48, borderRadius: 14,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 20,
+        background: hov ? `${accent}15` : 'rgba(192,57,43,0.06)',
+        border: `1.5px solid ${hov ? accent + '30' : '#ede8e4'}`,
+        color: accent, transition: 'all 0.22s',
+      }}>
         {icon}
       </div>
-      <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#c4b5b0" }}>{label}</p>
-      <p className="font-bold text-base break-words leading-snug mb-1" style={{ color: "#1c1917" }}>{value || "—"}</p>
-      {description && <p className="text-xs mt-1" style={{ color: "#a8a29e" }}>{description}</p>}
+
+      <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#c4b5b0', marginBottom: 6 }}>{label}</p>
+      <p style={{ fontWeight: 700, fontSize: 15, color: '#1c1917', lineHeight: 1.35, marginBottom: 4, wordBreak: 'break-word' }}>{value || '—'}</p>
+      {description && <p style={{ fontSize: 11.5, color: '#a8a29e', lineHeight: 1.6 }}>{description}</p>}
+
+      {href && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 14, color: accent, fontSize: 11, fontWeight: 700, opacity: hov ? 1 : 0, transform: hov ? 'translateX(0)' : 'translateX(-6px)', transition: 'all 0.22s' }}>
+          <span>View</span>
+          <ChevronRight size={12} />
+        </div>
+      )}
     </div>
   );
 
   if (!href) return inner;
   return (
-    <a href={href} target={href.startsWith("mailto") || href.startsWith("tel") ? "_self" : "_blank"}
-      rel="noreferrer" className="block h-full" style={{ textDecoration: "none" }}>
+    <a href={href} target={href.startsWith("mailto") || href.startsWith("tel") ? "_self" : "_blank"} rel="noreferrer" style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
       {inner}
     </a>
   );
@@ -103,16 +99,18 @@ function BarangayChip({ name }) {
     <span
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-default"
       style={{
-        background:  hov ? "rgba(192,57,43,0.09)" : "white",
-        border:      `1.5px solid ${hov ? "rgba(192,57,43,0.25)" : "#f0e8e5"}`,
-        color:       hov ? "#c0392b" : "#57534e",
-        transform:   hov ? "translateY(-2px)" : "none",
-        boxShadow:   hov ? "0 4px 12px rgba(192,57,43,0.1)" : "none",
-        transition:  "all 0.18s ease",
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '5px 12px', borderRadius: 8,
+        fontSize: 11.5, fontWeight: 600, cursor: 'default',
+        background: hov ? 'rgba(192,57,43,0.08)' : 'white',
+        border: `1.5px solid ${hov ? 'rgba(192,57,43,0.22)' : '#ede8e4'}`,
+        color: hov ? '#c0392b' : '#57534e',
+        transform: hov ? 'translateY(-2px)' : 'none',
+        boxShadow: hov ? '0 4px 12px rgba(192,57,43,0.1)' : 'none',
+        transition: 'all 0.18s ease',
       }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: hov ? "#c0392b" : "#d4b8b3", transition: "background 0.18s" }} />
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: hov ? '#c0392b' : '#d4b8b3', flexShrink: 0, transition: 'background 0.18s' }} />
       {name}
     </span>
   );
@@ -136,21 +134,17 @@ export function ContactPage() {
     loadContact().then(() => setTimeout(() => setMounted(true), 80));
   }, []);
 
-  // Poll every 5s to pick up admin changes
   useEffect(() => {
-    const id = setInterval(() => {
-      loadContact();
-    }, 5000);
+    const id = setInterval(() => { loadContact(); }, 5000);
     return () => clearInterval(id);
   }, []);
 
   if (!contact) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#fdf9f8" }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-2 border-t-transparent"
-            style={{ borderColor: "#c0392b", animation: "spin 1s linear infinite" }} />
-          <p className="text-sm font-semibold" style={{ color: "#a8a29e" }}>Loading contact information…</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f6f4' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', border: '2.5px solid #c0392b', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#a8a29e' }}>Loading contact information…</p>
         </div>
       </div>
     );
@@ -162,95 +156,127 @@ export function ContactPage() {
     : undefined;
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#fdf9f8", minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#f8f6f4', minHeight: '100vh' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
-        @keyframes pulseDot  { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.8);} }
-        @keyframes ticker    { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+        @keyframes pulseDot  { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.35;transform:scale(0.75);} }
         @keyframes spin      { to{transform:rotate(360deg)} }
-        @keyframes fadeUp    { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes fadeUp    { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+        @keyframes ticker    { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
         .ticker-outer { overflow: hidden; }
-        .ticker-inner { animation: ticker 30s linear infinite; white-space: nowrap; display: flex; gap: 80px; }
+        .ticker-inner { animation: ticker 30s linear infinite; white-space: nowrap; display: flex; gap: 0; }
         .ticker-inner:hover { animation-play-state: paused; }
         a { text-decoration: none; color: inherit; }
       `}</style>
 
-      {/* ── HERO ── */}
-      <section
-        className="relative py-16 sm:py-10 overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%)",
-          opacity: mounted ? 1 : 0,
-          transition: "opacity 0.7s ease",
-        }}>
-        <div className="absolute inset-0 pointer-events-none opacity-10"
-          style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.15) 1px,transparent 1px)",
-            backgroundSize: "40px 40px",
-          }} />
+      {/* ══════════════ HERO ══════════════ */}
+      <section style={{
+        position: 'relative',
+        background: 'linear-gradient(135deg, #991b0f 0%, #7a1212 50%, #c0392b 100%)',
+        overflow: 'hidden',
+        paddingTop: 72, paddingBottom: 88,
+        opacity: mounted ? 1 : 0, transition: 'opacity 0.6s ease',
+      }}>
+        {/* Grid texture */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.08,
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }} />
+        <div style={{ position: 'absolute', right: -60, top: -60, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: 'linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.05))' }} />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="mb-5"><LiveBadge /></div>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 2rem', position: 'relative', zIndex: 10 }}>
+          {/* Status badge */}
+          <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.22)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80', flexShrink: 0, animation: 'pulseDot 2s ease-in-out infinite' }} />
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'white', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Emergency Services Active</span>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}>
+              <MapPin size={10} style={{ color: 'rgba(255,255,255,0.7)' }} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Cogon · CDO</span>
+            </div>
+          </div>
 
-          <h1 className="font-black text-white leading-none mb-4"
-            style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(6rem, 8vw, 8rem)", letterSpacing: "0.05em" }}>
-            EMERGENCY<br />
-            <span style={{ opacity: 0.88 }}>CONTACTS</span>
+          <h1 style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: 'clamp(4rem, 9vw, 7.5rem)',
+            letterSpacing: '0.05em', lineHeight: 0.9,
+            color: 'white', marginBottom: 22,
+          }}>
+            CONTACT<br />
+            <span style={{ opacity: 0.85 }}>& REACH US</span>
           </h1>
 
-          <p className="mb-10 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.7)", maxWidth: "440px" }}>
-            Bureau of Fire Protection — Cogon Fire Station.<br />
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', lineHeight: 1.8, maxWidth: 460, marginBottom: 36 }}>
+            Bureau of Fire Protection — Station 1, Cogon.<br />
             Prepared. Responsive. Committed to your safety.
           </p>
 
-          <div className="flex flex-wrap gap-3">
-            <StatBlock value={contact.nationalEmergency || "911"} label="Emergency"    accent="#fde68a" />
-            <StatBlock value="24/7"                               label="Response"     accent="#6ee7b7" />
-            <StatBlock value={contact.barangays.length}           label="Barangays"    accent="#93c5fd" />
-            <StatBlock value="<5min"                              label="Avg. Response" accent="#fda4af" />
+          {/* Stat chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            {[
+              { val: '911', label: 'Emergency' },
+              { val: '24/7', label: 'Response' },
+              { val: '25+', label: 'Barangays' },
+            ].map(({ val, label }) => (
+              <div key={label} style={{ padding: '12px 20px', borderRadius: 14, textAlign: 'center', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)' }}>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: '0.06em', color: 'white', lineHeight: 1 }}>{val}</p>
+                <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── 911 LIFTED CARD ── */}
-      <div className="px-4 sm:px-6 -mt-8 relative z-20 max-w-6xl mx-auto">
-        <div className="rounded-2xl overflow-hidden"
-          style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 12px 40px rgba(192,57,43,0.12)" }}>
-          <div className="h-[3px]" style={{ background: "linear-gradient(90deg, #c0392b, #e67e22, #f39c12)" }} />
-          <div className="flex flex-col md:flex-row items-center justify-between gap-5 px-6 sm:px-8 py-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(192,57,43,0.09)", border: "1.5px solid rgba(192,57,43,0.2)" }}>
-                <Phone size={22} style={{ color: "#c0392b" }} />
+
+
+      {/* ══════════════ 911 LIFTED CARD ══════════════ */}
+      <div style={{ maxWidth: 1200, margin: '-36px auto 0', padding: '0 2rem', position: 'relative', zIndex: 20 }}>
+        <div style={{ borderRadius: 20, overflow: 'hidden', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 16px 48px rgba(192,57,43,0.14)' }}>
+          <div style={{ height: 3, background: 'linear-gradient(90deg, #c0392b, #e67e22, #f39c12)' }} />
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 20, padding: '28px 36px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(192,57,43,0.08)', border: '1.5px solid rgba(192,57,43,0.18)' }}>
+                <Phone size={26} style={{ color: '#c0392b' }} />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#c0392b" }}>
-                  National Emergency Hotline
-                </p>
-                <p className="font-black text-5xl leading-none mt-1"
-                  style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.06em", color: "#1c1917" }}>
+                <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#c0392b', marginBottom: 4 }}>National Emergency Hotline</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '4.5rem', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
                   {contact.nationalEmergency || "911"}
                 </p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
-                  <span className="text-green-600 text-xs font-bold">Live & Monitored 24/7</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0, animation: 'pulseDot 2s ease-in-out infinite' }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>Live & Monitored 24 Hours, 7 Days a Week</span>
                 </div>
               </div>
             </div>
-            <a href={`tel:${contact.nationalEmergency || "911"}`}
-              className="flex items-center gap-2 text-white font-black text-sm uppercase tracking-widest px-7 py-3.5 rounded-xl transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #c0392b, #ed3a0d)", boxShadow: "0 4px 16px rgba(209, 145, 16, 0.3)" }}>
-              <Phone size={15} />
-              Call {contact.nationalEmergency || "911"} Now
-            </a>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
+              <a href={`tel:${contact.nationalEmergency || "911"}`}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  color: 'white', fontWeight: 800, fontSize: 13,
+                  textTransform: 'uppercase', letterSpacing: '0.06em',
+                  padding: '14px 28px', borderRadius: 14,
+                  background: 'linear-gradient(135deg, #c0392b, #e64a11)',
+                  boxShadow: '0 6px 24px rgba(192,57,43,0.38)',
+                  transition: 'all 0.2s',
+                }}>
+                <Phone size={16} />
+                Call {contact.nationalEmergency || "911"} Now
+              </a>
+              <p style={{ fontSize: 10, color: '#a8a29e', fontWeight: 500 }}>For non-emergency: use local station hotline</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── CONTACT CARDS ── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ══════════════ CONTACT CARDS ══════════════ */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 2rem 0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           <ContactCard
             label="Local Station Hotline"
             value={contact.localHotline}
@@ -276,124 +302,238 @@ export function ContactPage() {
             icon={<Facebook size={20} />}
           />
 
-          {/* Office Hours card */}
-          <div className="rounded-2xl p-6 h-full"
-            style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-              style={{ background: "rgba(180,83,9,0.07)", border: "1.5px solid rgba(180,83,9,0.15)" }}>
-              <Clock size={20} style={{ color: "#b45309" }} />
+          {/* Office Hours */}
+          <div style={{ borderRadius: 18, padding: '28px 24px', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, background: 'rgba(180,83,9,0.07)', border: '1.5px solid rgba(180,83,9,0.15)' }}>
+              <Clock size={20} style={{ color: '#b45309' }} />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "#c4b5b0" }}>Office Hours</p>
+            <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#c4b5b0', marginBottom: 14 }}>Office Hours</p>
 
             {contact.officeHours.length > 0 ? (
-              <div className="space-y-2.5">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {contact.officeHours.map((o, i) => (
-                  <div key={i} className="flex justify-between items-center gap-2">
-                    <span className="text-xs" style={{ color: "#78716c" }}>{o.type}</span>
-                    <span className="text-xs font-bold"
-                      style={{ color: o.time === "24 / 7" ? "#16a34a" : o.time === "Closed" ? "#c0392b" : "#1c1917" }}>
-                      {o.time}
-                    </span>
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, paddingBottom: i < contact.officeHours.length - 1 ? 10 : 0, borderBottom: i < contact.officeHours.length - 1 ? '1px solid #f5ede9' : 'none' }}>
+                    <span style={{ fontSize: 11.5, color: '#78716c', fontWeight: 500 }}>{o.type}</span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700,
+                      padding: '2px 8px', borderRadius: 6,
+                      background: o.time === '24 / 7' ? 'rgba(22,163,74,0.08)' : o.time === 'Closed' ? 'rgba(192,57,43,0.07)' : 'rgba(0,0,0,0.04)',
+                      color: o.time === '24 / 7' ? '#16a34a' : o.time === 'Closed' ? '#c0392b' : '#1c1917',
+                    }}>{o.time}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs" style={{ color: "#c4b5b0", fontStyle: "italic" }}>Hours not set</p>
+              <p style={{ fontSize: 11.5, color: '#c4b5b0', fontStyle: 'italic' }}>Hours not set</p>
             )}
 
-            <div className="flex items-center gap-2 mt-4 pt-3" style={{ borderTop: "1px solid #f5ede9" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
-              <span className="text-green-600 text-[11px] font-semibold">Emergency line always active</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 16, paddingTop: 14, borderTop: '1px solid #f5ede9' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', flexShrink: 0, animation: 'pulseDot 2s ease-in-out infinite' }} />
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: '#16a34a' }}>Emergency line always active</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── LOCATION ── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5">
-        <div className="rounded-2xl overflow-hidden"
-          style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-          <div className="relative h-80 overflow-hidden bg-black">
+      {/* ══════════════ LOCATION + MAP ══════════════ */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 0' }}>
+        <div style={{ borderRadius: 20, overflow: 'hidden', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+
+          {/* Map area */}
+          <div style={{ position: 'relative', height: 320, background: '#1a1a1a', overflow: 'hidden' }}>
             <img
-              src="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=124.6466,8.4794,124.6482,8.4808&bboxSR=4326&imageSR=4326&size=800,400&format=png&f=image"
+              src="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=124.6466,8.4794,124.6482,8.4808&bboxSR=4326&imageSR=4326&size=1200,400&format=png&f=image"
               alt="BFP Cogon Fire Station Satellite Map"
-              className="absolute inset-0 w-full h-full object-cover"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
             />
-            <div className="absolute inset-0 bg-black/10" />
-            <div className="absolute left-1/2 top-1/2" style={{ transform: "translate(-50%, -100%)" }}>
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
-                  style={{ background: "linear-gradient(135deg,#c0392b,#e67e22)", boxShadow: "0 4px 12px rgba(192,57,43,0.45)" }}>
-                  <MapPin size={18} className="text-white" />
+            {/* Map tint */}
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.12)' }} />
+
+            {/* Top gradient for elegance */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), transparent)' }} />
+
+            {/* Map label top left */}
+            <div style={{
+              position: 'absolute', top: 16, left: 16,
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(10px)',
+              borderRadius: 10, padding: '7px 14px', border: '1px solid rgba(255,255,255,0.1)',
+            }}>
+              <MapPin size={12} style={{ color: '#e67e22' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'white', letterSpacing: '0.06em' }}>Cogon Fire Station, CDO</span>
+            </div>
+
+            {/* Location Pin */}
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -100%)',
+                pointerEvents: 'none',
+              }}
+            >
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                {/* Pin body */}
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50% 50% 50% 0',
+                    transform: 'rotate(-45deg)',
+                    background: '#c0392b', // solid = more professional
+                    boxShadow:
+                      '0 8px 22px rgba(0,0,0,0.35), 0 0 0 4px rgba(192,57,43,0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {/* Center dot */}
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      background: 'white',
+                      borderRadius: '50%',
+                      transform: 'rotate(45deg)',
+                    }}
+                  />
                 </div>
-                <div className="w-0.5 h-3 bg-[#c0392b]" />
-                <div className="w-4 h-2 rounded-full" style={{ background: "rgba(0,0,0,0.35)", filter: "blur(4px)" }} />
+
+                {/* Ground shadow */}
+                <div
+                  style={{
+                    marginTop: 6,
+                    width: 14,
+                    height: 5,
+                    borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.35)',
+                    filter: 'blur(3px)',
+                  }}
+                />
               </div>
             </div>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap"
-              style={{ background: "white", border: "1.5px solid #f0e8e5", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-              <MapPin size={12} style={{ color: "#c0392b" }} />
-              <span className="text-xs font-semibold" style={{ color: "#1c1917" }}>BFP Cogon Fire Station</span>
-            </div>
+
+            {/* Bottom gradient */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 64, background: 'linear-gradient(to top, rgba(0,0,0,0.35), transparent)' }} />
           </div>
 
-          <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-            style={{ borderTop: "1.5px solid #f5ede9" }}>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#c4b5b0" }}>Station Address</p>
-              <p className="font-semibold text-sm" style={{ color: "#1c1917" }}>
-                {contact.location || "Cogon Fire Station, Cagayan de Oro City"}
-              </p>
+          {/* Address row */}
+          <div style={{ padding: '20px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', borderTop: '1.5px solid #f0ebe7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(192,57,43,0.07)', border: '1.5px solid rgba(192,57,43,0.14)' }}>
+                <MapPin size={18} style={{ color: '#c0392b' }} />
+              </div>
+              <div>
+                <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#c4b5b0', marginBottom: 3 }}>Station Address</p>
+                <p style={{ fontWeight: 600, fontSize: 13.5, color: '#1c1917', lineHeight: 1.4 }}>
+                  {contact.location || "Cogon Fire Station, Cagayan de Oro City"}
+                </p>
+              </div>
             </div>
             <a href={mapsUrl} target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all hover:scale-105 shrink-0"
-              style={{ background: "linear-gradient(135deg,#c0392b,#e67e22)", boxShadow: "0 3px 10px rgba(237, 29, 6, 0.25)" }}>
-              <ExternalLink size={13} /> Open in Google Maps
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                color: 'white', fontWeight: 700, fontSize: 12,
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+                padding: '11px 22px', borderRadius: 12, flexShrink: 0,
+                background: 'linear-gradient(135deg, #c0392b, #e67e22)',
+                boxShadow: '0 4px 14px rgba(192,57,43,0.28)',
+                transition: 'all 0.2s',
+              }}>
+              <ExternalLink size={14} /> Open in Google Maps
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── BARANGAYS ── */}
+      {/* ══════════════ BARANGAYS ══════════════ */}
       {contact.barangays.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5">
-          <div className="rounded-2xl p-6 sm:p-8"
-            style={{ background:"white", border:"1.5px solid #f0e8e5", boxShadow:"0 2px 8px rgba(0,0,0,0.04)" }}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <section style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 0' }}>
+          <div style={{ borderRadius: 20, padding: '36px 32px', background: 'white', border: '1.5px solid #ede8e4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color:"#c0392b" }}>Coverage Area</p>
-                <h2 className="font-black leading-none"
-                  style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"1.8rem", letterSpacing:"0.05em", color:"#1c1917" }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <div style={{ width: 20, height: 2, background: '#c0392b', borderRadius: 2 }} />
+                  <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#c0392b' }}>Coverage Area</span>
+                </div>
+                <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
                   Barangays Under Jurisdiction
                 </h2>
               </div>
-              <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl"
-                style={{ background:"rgba(192,57,43,0.08)", border:"1.5px solid rgba(192,57,43,0.18)", color:"#c0392b" }}>
-                <Shield size={14} />
-                {contact.barangays.length} Barangays
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ padding: '10px 18px', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(192,57,43,0.07)', border: '1.5px solid rgba(192,57,43,0.16)' }}>
+                  <Shield size={15} style={{ color: '#c0392b' }} />
+                  <span style={{ fontSize: 13, fontWeight: 800, color: '#c0392b' }}>{contact.barangays.length} Barangays</span>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 text-[10px]">
+
+            {/* Divider */}
+            <div style={{ height: 1, background: '#f0ebe7', marginBottom: 20 }} />
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {contact.barangays.map((b, i) => <BarangayChip key={i} name={b} />)}
             </div>
           </div>
         </section>
       )}
 
-      {/* ── SAFETY NOTICE ── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 mt-5 pb-16">
-        <div className="flex items-start gap-4 p-5 rounded-2xl"
-          style={{ background:"rgba(217,119,6,0.05)", border:"1.5px solid rgba(217,119,6,0.2)" }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background:"rgba(217,119,6,0.1)", border:"1.5px solid rgba(217,119,6,0.2)" }}>
-            <AlertTriangle size={18} style={{ color:"#d97706" }} />
+      {/* ══════════════ SAFETY NOTICE + CTA ══════════════ */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 2rem 80px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+          {/* Safety notice */}
+          <div style={{ display: 'flex', gap: 16, padding: '24px', borderRadius: 18, background: 'rgba(217,119,6,0.05)', border: '1.5px solid rgba(217,119,6,0.18)' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(217,119,6,0.1)', border: '1.5px solid rgba(217,119,6,0.2)' }}>
+              <AlertTriangle size={20} style={{ color: '#d97706' }} />
+            </div>
+            <div>
+              <p style={{ fontWeight: 800, fontSize: 13, color: '#92400e', marginBottom: 6 }}>Safety Reminder</p>
+              <p style={{ fontSize: 12.5, lineHeight: 1.7, color: '#78716c' }}>
+                <strong style={{ color: '#44403c' }}>Never risk your life to save property.</strong>{" "}
+                In a fire emergency, evacuate immediately and call 911. Do not re-enter a burning building. Leave firefighting to trained BFP personnel.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-sm mb-1" style={{ color:"#92400e" }}>Safety Reminder</p>
-            <p className="text-sm leading-relaxed" style={{ color:"#78716c" }}>
-              <strong style={{ color:"#44403c" }}>Never risk your life to save property.</strong>{" "}
-              In a fire emergency, evacuate all persons immediately and call 911. Do not re-enter a burning building. Leave firefighting to trained BFP personnel.
-            </p>
+
+          {/* Quick CTA */}
+          <div style={{
+            borderRadius: 18, overflow: 'hidden',
+            background: 'linear-gradient(135deg, #1c1917 0%, #292524 100%)',
+            border: '1px solid #3d3533',
+            padding: '24px 28px',
+            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+            position: 'relative',
+          }}>
+            <div style={{ position: 'absolute', right: -30, bottom: -30, width: 140, height: 140, borderRadius: '50%', border: '24px solid rgba(192,57,43,0.1)', pointerEvents: 'none' }} />
+            <div>
+              <p style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#e67e22', marginBottom: 6 }}>Bureau of Fire Protection</p>
+              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: '0.04em', color: 'white', lineHeight: 1, marginBottom: 6 }}>
+                Station 1 · Cogon · CDO
+              </h3>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', fontWeight: 500 }}>Protecting lives & properties since 1990 · Region X · DILG</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
+              <a href={`tel:${contact.nationalEmergency || "911"}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg, #c0392b, #e64a11)', color: 'white', fontWeight: 700, fontSize: 12, letterSpacing: '0.04em' }}>
+                <Phone size={13} /> Call 911
+              </a>
+              {fbHref && (
+                <a href={fbHref} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 10, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.16)', color: 'rgba(255,255,255,0.75)', fontWeight: 600, fontSize: 12 }}>
+                  <Facebook size={13} /> Facebook
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>
