@@ -278,7 +278,7 @@ export function AdminDashboard() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
               {[
-                { label: 'Total Officers',       value: stats.officers, max: 100, color: '#c0392b', bg: '#fff5f3', stripe: 'linear-gradient(90deg,#c0392b,#e74c3c)', icon: Users,    sub: 'Active Personnel' },
+                { label: 'Total Officers',       value: stats.officers, max: 150, color: '#c0392b', bg: '#fff5f3', stripe: 'linear-gradient(90deg,#c0392b,#e74c3c)', icon: Users,    sub: 'Active Personnel' },
                 { label: 'Weekly Reports Filed', value: stats.reports,  max: 1000, color: '#d35400', bg: '#fff8f3', stripe: 'linear-gradient(90deg,#d35400,#e67e22)', icon: FileText, sub: 'Reports Published' },
                 { label: 'Station Status', isStatus: true, color: '#16a34a', bg: '#f0fdf4', stripe: 'linear-gradient(90deg,#16a34a,#22c55e)', icon: Shield, sub: 'All Systems Normal' },
               ].map(({ label, value, max, color, bg, stripe, icon: Icon, sub, isStatus }) => (

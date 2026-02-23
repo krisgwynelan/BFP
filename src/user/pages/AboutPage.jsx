@@ -2,15 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Target, Eye, ShieldCheck, FileText, Flame, Users, Award, MapPin, Phone, Clock } from "lucide-react";
 
 export function AboutPage() {
-  const images = ["/Fire.jpg", "/Wall.jpg", "/Cogon.jpg", "/HELP.jpg"];
+  const images = ["/Wall.jpg"];
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, []);
+
 
   return (
     <div id="about-root" style={{ fontFamily: "'DM Sans', sans-serif", background: '#f5f3f0', width: '100%', position: 'relative', isolation: 'isolate', zIndex: 0 }}>
@@ -197,20 +192,17 @@ export function AboutPage() {
             </div>
 
             {/* Right: Slideshow */}
-            <div style={{ position: 'relative', paddingBottom: 28, paddingRight: 28 }}>
+            <div style={{ position: 'relative', paddingBottom: 28, }}>
               <div style={{
-                borderRadius: 18, overflow: 'hidden', height: 480,
+                borderRadius: 15, overflow: 'hidden', height: 480,
                 border: '1px solid #e4ddd8',
                 boxShadow: '0 24px 72px rgba(0,0,0,0.14)',
                 position: 'relative',
               }}>
                 {images.map((img, i) => (
                   <img key={i} src={img} alt={`BFP Station ${i + 1}`} style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'absolute',
                     opacity: currentIndex === i ? 1 : 0,
-                    transform: currentIndex === i ? 'scale(1.04)' : 'scale(1)',
-                    transition: 'opacity 1.1s ease, transform 7s ease',
-                    zIndex: currentIndex === i ? 10 : 0,
                   }} />
                 ))}
                 <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'linear-gradient(to top, rgba(10,5,3,0.6) 0%, transparent 55%)', pointerEvents: 'none' }} />
@@ -234,13 +226,13 @@ export function AboutPage() {
               </div>
               {/* Floating badge */}
               <div style={{
-                position: 'absolute', bottom: 0, right: 0,
+                position: 'absolute', bottom: -10, right: -55,
                 background: 'linear-gradient(135deg, #c0392b 0%, #8b1a0e 100%)',
                 borderRadius: 14, padding: '18px 22px',
                 boxShadow: '0 14px 40px rgba(192,57,43,0.45)',
-                zIndex: 40,
+                zIndex: 50,
               }}>
-                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1, letterSpacing: '0.04em', margin: 0 }}>Since</p>
+                <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1, letterSpacing: '0.4em', margin: 0 }}>Since</p>
                 <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.6rem', color: 'white', lineHeight: 1, letterSpacing: '0.04em', margin: 0 }}>1990</p>
                 <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.14em', marginTop: 4, marginBottom: 0 }}>Years of Service</p>
               </div>
