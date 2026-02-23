@@ -474,12 +474,12 @@ export function HomePage() {
 
       {/* ══ HERO ══ */}
       <section style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', overflow: 'hidden' }}>
-        <img src={Fire} alt="BFP Station 1 Cogon" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={Fire} alt="BFP Station 1 Cogon" style={{ position: 'absolute', inset: 0, width: '100%', height: '95%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(6,2,1,0.96) 0%,rgba(10,3,2,0.72) 35%,rgba(0,0,0,0.25) 100%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(108deg,rgba(6,2,1,0.7) 0%,transparent 52%)' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, width: 3, height: '100%', background: 'linear-gradient(to bottom,#c0392b 0%,#e67e22 55%,transparent 100%)', opacity: 0.9 }} />
 
-        <div style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', padding: '0 2.5rem 5.5rem', paddingTop: '9rem', width: '100%' }}>
+        <div style={{ position: 'relative', zIndex: 10, maxWidth: 1280, margin: '0 auto', padding: '0 2.5rem 6.5rem', paddingTop: '9rem', width: '100%' }}>
           <div style={{ maxWidth: 700 }}>
             <div className="hm-f1" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 30, flexWrap: 'wrap' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 15px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(12px)', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'white' }}>
