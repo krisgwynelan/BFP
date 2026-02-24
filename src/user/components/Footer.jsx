@@ -88,7 +88,7 @@ export function Footer() {
                 </div>
               </div>
               <p style={{ fontSize: 12, lineHeight: 1.75, color: '#78716c', marginBottom: 14, maxWidth: 280 }}>
-                Bureau of Fire Protection — Cogon Fire Station. Committed to protecting lives and property in Northern Mindanao.
+                Bureau of Fire Protection — Cogon Fire Station. Committed to protecting lives and property in Cagayn de Oro City.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <a href="https://www.facebook.com/profile.php?id=61574576392850" target="_blank" rel="noopener noreferrer" className="footer-social-btn">

@@ -19,7 +19,7 @@ export const RANK_ABBREVIATIONS = {
   'Senior Fire Officer II': 'SFO2',
   'Senior Fire Officer III': 'SFO3',
   'Fire Inspector': 'FINSP',
-  'Senior Fire Inspector': 'SINSP',
+  'Senior Fire Inspector': 'FSINSP',
   'Chief Fire Inspector': 'CINSP',
   'Chief Fire Officer': 'CFO'
 };

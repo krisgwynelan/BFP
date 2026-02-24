@@ -168,9 +168,11 @@ function OrgMemberCard({ officer, c }) {
         borderRadius: 22,
         boxShadow: hovered ? `0 10px 28px ${c.glow}` : `0 2px 10px ${c.glow}`,
         width: 290, minWidth: 200,
-        height: 300,
+        minHeight: 300,          // ✅ minHeight instead of fixed height
+        height: 'auto',          // ✅ let it grow with content
         transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
         transition: 'transform 0.2s, box-shadow 0.2s',
+        overflow: 'hidden',      // ✅ clip anything that escapes
       }}
     >
       {/* Avatar with gradient ring + rank pill overlay */}
@@ -202,35 +204,67 @@ function OrgMemberCard({ officer, c }) {
         }}>{abbr(officer.rank)}</span>
       </div>
 
-      {/* Name */}
+      {/* Name — max 2 lines, then ellipsis */}
       <p style={{
-        fontSize: 18, fontWeight: 700, color: '#111827', textAlign: 'center',
-        margin: '0 0 5px', lineHeight: 1.25,
-        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-        overflow: 'hidden', width: '100%',
-      }}>{officer.fullName}</p>
+        fontSize: 18,
+        fontWeight: 700,
+        color: '#111827',
+        textAlign: 'center',
+        margin: '0 0 5px',
+        lineHeight: 1.25,
+        width: '100%',
+        // ✅ clamp to 2 lines
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        wordBreak: 'break-word',
+      }}>
+        {officer.fullName}
+      </p>
 
-      {/* Full rank */}
+      {/* Full rank — 1 line, ellipsis */}
       <p style={{
-        fontSize: 17, fontWeight: 500, color: c.pillColor, textAlign: 'center',
-        margin: '0 0 6px', whiteSpace: 'nowrap', overflow: 'hidden',
-        textOverflow: 'ellipsis', width: '100%',
+        fontSize: 14,               // ✅ slightly smaller so long ranks fit
+        fontWeight: 500,
+        color: c.pillColor,
+        textAlign: 'center',
+        margin: '0 0 6px',
+        width: '100%',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
       }}>{officer.rank}</p>
 
-      {/* Role */}
+      {/* Role — max 2 lines, then ellipsis */}
       {role && (
         <p style={{
-          fontSize: 13, fontWeight: 500, color: '#78716c', textAlign: 'center',
-          margin: '0 0 8px', whiteSpace: 'nowrap', overflow: 'hidden',
-          textOverflow: 'ellipsis', width: '100%',
-        }}>{role}</p>
+          fontSize: 13,
+          fontWeight: 500,
+          color: '#78716c',
+          textAlign: 'center',
+          margin: '0 0 8px',
+          width: '100%',
+          lineHeight: 1.4,
+          // ✅ clamp to 2 lines
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          wordBreak: 'break-word',
+        }}>
+          {role}
+        </p>
       )}
 
       {/* Contact */}
       {officer.contactNumber && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
-          <Phone size={12} style={{ color: '#c4b5b0' }} />
-          <span style={{ fontSize: 13, color: '#a8a29e' }}>{officer.contactNumber}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, maxWidth: '100%' }}>
+          <Phone size={12} style={{ color: '#c4b5b0', flexShrink: 0 }} />
+          <span style={{
+            fontSize: 13, color: '#a8a29e',
+            overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+          }}>{officer.contactNumber}</span>
         </div>
       )}
     </div>

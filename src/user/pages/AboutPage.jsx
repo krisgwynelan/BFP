@@ -194,7 +194,7 @@ export function AboutPage() {
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {[
                   { title: 'Our Role', text: 'The Bureau of Fire Protection — Station 1 Cogon is the primary government agency responsible for fire prevention, suppression, investigation, and auxiliary emergency services in Cagayan de Oro City.' },
-                  { title: 'Our Reach', text: 'We serve over 25 barangays, providing 24/7 emergency response, fire safety education, and inspection services to residents, businesses, and institutions across Northern Mindanao.' },
+                  { title: 'Our Reach', text: 'We serve over 25 barangays, providing 24/7 emergency response, fire safety education, and inspection services to residents, businesses, and institutions across Cagayan de Oro City.' },
                   { title: 'Our People', text: 'Our team of trained firefighters, rescue personnel, fire safety inspectors, and administrative staff work around the clock in unwavering service to the community.' },
                 ].map(({ title, text }) => (
                   <div key={title} className="abt-tl-item">
@@ -232,7 +232,7 @@ export function AboutPage() {
               }}>
                 {images.map((img, i) => (
                   <img key={i} src={img} alt={`BFP Station ${i + 1}`} style={{
-                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                    position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fit',
                     opacity: currentIndex === i ? 1 : 0,
                     transition: 'opacity 0.5s ease',
                   }} />
