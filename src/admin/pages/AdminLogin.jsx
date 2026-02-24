@@ -4,11 +4,11 @@ import { toast } from "sonner";
 import bgFire from "/Fire.jpg";
 import Logo from "/BFP.jpg";
 import { Eye, EyeOff, Shield, AlertTriangle, Info, Lock, ArrowLeft, Flame } from "lucide-react";
-
-const DEFAULT_ADMIN_PASSWORD = "bfpcogon1234";
-const getStoredPassword = () => localStorage.getItem("bfp_admin_password") || DEFAULT_ADMIN_PASSWORD;
+import { auth } from "../../firebase"; // adjust path as needed
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export function AdminLogin() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -17,14 +17,23 @@ export function AdminLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600)); // brief UX delay
-    const adminPassword = getStoredPassword();
-    if (password === adminPassword) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       sessionStorage.setItem("admin_logged_in", "true");
       toast.success("Access granted. Welcome back.");
       navigate("/admin/dashboard");
-    } else {
-      toast.error("Incorrect password. Access denied.");
+    } catch (err) {
+      const code = err.code;
+      if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+        toast.error("Incorrect email or password. Access denied.");
+      } else if (code === "auth/too-many-requests") {
+        toast.error("Too many failed attempts. Account temporarily locked. Try again later.");
+      } else if (code === "auth/network-request-failed") {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error("Login failed. Please try again.");
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -55,6 +64,15 @@ export function AdminLogin() {
         }
         .al-input:focus { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
         .al-input::placeholder { color: #b0aaa6; }
+        .al-input-plain {
+          width: 100%; padding: 13px 16px;
+          border-radius: 10px; border: 1.5px solid #d4ccc6;
+          background: white; color: #1a1714;
+          font-size: 14px; font-family: inherit;
+          outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .al-input-plain:focus { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(192,57,43,0.1); }
+        .al-input-plain::placeholder { color: #b0aaa6; }
 
         .al-btn-submit {
           width: 100%; padding: 13px;
@@ -98,7 +116,6 @@ export function AdminLogin() {
       <div style={{ position: 'absolute', inset: 0 }}>
         <img src={bgFire} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(5,1,1,0.92) 0%, rgba(10,3,2,0.85) 50%, rgba(20,5,3,0.9) 100%)' }} />
-        {/* Subtle diagonal lines */}
         <div style={{ position: 'absolute', inset: 0, opacity: 0.04, backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.8) 0px, rgba(255,255,255,0.8) 1px, transparent 1px, transparent 32px)' }} />
       </div>
 
@@ -153,12 +170,11 @@ export function AdminLogin() {
               Important Notice
             </p>
           </div>
-
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {[
               { icon: <Shield size={13} />, text: 'This portal is exclusively for authorized BFP Station 1 Cogon personnel only. Unauthorized access is strictly prohibited.' },
-              { icon: <Lock size={13} />, text: 'All actions performed in this system are logged and may be reviewed by station administrators.' },
-                ].map(({ icon, text }, i) => (
+              { icon: <Lock size={13} />, text: 'All login attempts are monitored by Firebase Authentication. Too many failed attempts will temporarily lock access.' },
+            ].map(({ icon, text }, i) => (
               <div key={i} className="al-note-item">
                 <div style={{ color: '#e67e22', flexShrink: 0, marginTop: 1 }}>{icon}</div>
                 <p style={{ fontSize: 12.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.65)', margin: 0 }}>{text}</p>
@@ -174,10 +190,25 @@ export function AdminLogin() {
           backdropFilter: 'blur(20px)',
           borderRadius: 18, padding: '28px 28px 24px',
         }}>
-          {/* Top accent */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #8b1a0e, #c0392b, #e67e22)', borderRadius: '18px 18px 0 0', display: 'none' }} />
-
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* Email field */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
+                Admin Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className="al-input-plain"
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            {/* Password field */}
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
                 Admin Password
@@ -202,7 +233,7 @@ export function AdminLogin() {
               </div>
             </div>
 
-            <button type="submit" disabled={loading || !password} className="al-btn-submit">
+            <button type="submit" disabled={loading || !email || !password} className="al-btn-submit">
               {loading ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   <span className="al-spinner" />
@@ -219,7 +250,7 @@ export function AdminLogin() {
           <div style={{ marginTop: 18, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 9, border: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Info size={13} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
             <p style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.35)', margin: 0, fontWeight: 500 }}>
-              Default: <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.05em' }}></span>
+              Secured by <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>Firebase Authentication</span>. Brute-force protection is enabled.
             </p>
           </div>
         </div>

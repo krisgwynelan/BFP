@@ -1,24 +1,22 @@
 // src/utils/storage.js
-import { db } from "../firebase";
+import { db } from "../firebase"; // adjust path if needed
 import {
   collection,
   getDocs,
   doc,
   setDoc,
   getDoc,
-  deleteDoc
+  deleteDoc,
 } from "firebase/firestore";
 
-/* ================= OFFICERS ================= */
-
-const officersCol = collection(db, "officers");
+/* ─────────────────────────────────────────────────────────────────
+   OFFICERS
+   Collection: /officers/{id}
+───────────────────────────────────────────────────────────────── */
 
 export const getOfficers = async () => {
-  const snapshot = await getDocs(officersCol);
-  return snapshot.docs.map(d => ({
-    id: d.id,
-    ...d.data(),
-  }));
+  const snapshot = await getDocs(collection(db, "officers"));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const saveOfficer = async (id, officerData) => {
@@ -29,16 +27,14 @@ export const deleteOfficer = async (id) => {
   await deleteDoc(doc(db, "officers", id));
 };
 
-/* ================= WEEKLY REPORTS ================= */
-
-const reportsCol = collection(db, "weeklyReports");
+/* ─────────────────────────────────────────────────────────────────
+   WEEKLY REPORTS
+   Collection: /weeklyReports/{id}
+───────────────────────────────────────────────────────────────── */
 
 export const getWeeklyReports = async () => {
-  const snapshot = await getDocs(reportsCol);
-  return snapshot.docs.map(d => ({
-    id: d.id,
-    ...d.data(),
-  }));
+  const snapshot = await getDocs(collection(db, "weeklyReports"));
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const saveWeeklyReport = async (id, reportData) => {
@@ -49,41 +45,33 @@ export const deleteWeeklyReport = async (id) => {
   await deleteDoc(doc(db, "weeklyReports", id));
 };
 
-/* ================= CONTACT INFO ================= */
+/* ─────────────────────────────────────────────────────────────────
+   CONTACT INFO
+   Document: /settings/contact  (single document)
+───────────────────────────────────────────────────────────────── */
 
-const contactDoc = doc(db, "settings", "contact");
+const CONTACT_DOC = doc(db, "settings", "contact");
+
+const CONTACT_DEFAULTS = {
+  nationalEmergency: "",
+  localHotline: "",
+  email: "",
+  facebookPage: "",
+  location: "",
+  officeHours: [],
+  barangays: [],
+};
 
 export const getContactInfo = async () => {
-  const snapshot = await getDoc(contactDoc);
+  const snapshot = await getDoc(CONTACT_DOC);
   if (!snapshot.exists()) {
-    const empty = {
-      nationalEmergency: "",
-      localHotline: "",
-      email: "",
-      facebookPage: "",
-      location: "",
-      officeHours: [],
-      barangays: [],
-    };
-    await setDoc(contactDoc, empty);
-    return empty;
+    // First time — seed with empty defaults
+    await setDoc(CONTACT_DOC, CONTACT_DEFAULTS);
+    return CONTACT_DEFAULTS;
   }
   return snapshot.data();
 };
 
 export const saveContactInfo = async (data) => {
-  await setDoc(contactDoc, data, { merge: true });
-};
-
-/* ================= ADMIN PASSWORD ================= */
-
-const adminPassDoc = doc(db, "settings", "adminPassword");
-
-export const getAdminPassword = async () => {
-  const snapshot = await getDoc(adminPassDoc);
-  return snapshot.exists() ? snapshot.data().password : "admin123";
-};
-
-export const setAdminPassword = async (password) => {
-  await setDoc(adminPassDoc, { password });
+  await setDoc(CONTACT_DOC, data, { merge: true });
 };
