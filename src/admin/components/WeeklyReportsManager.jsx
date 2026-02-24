@@ -377,7 +377,7 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
             {saving && (
               <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.5)', borderTopColor: 'white', animation: 'wrmSpin 0.8s linear infinite' }} />
             )}
-            {saving ? 'Saving…' : editingReport ? '✓  Update Report' : '+  Publish Report'}
+            {saving ? 'Saving…' : editingReport ? '  Update Report' : ' Publish Report'}
           </button>
           <button type="button" onClick={onClose} disabled={saving}
             style={{ flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12, fontSize: 14, background: '#f5f0ed', border: '1px solid #e8ddd8', color: '#57534e', cursor: saving ? 'not-allowed' : 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
@@ -667,7 +667,7 @@ export function WeeklyReportsManager() {
         </div>
         <button onClick={() => setIsFormOpen(true)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, padding: '11px 22px', borderRadius: 12, color: 'white', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)', fontFamily: 'inherit' }}>
-          <Plus size={15} /> Add Report
+          Add Report
         </button>
       </div>
 

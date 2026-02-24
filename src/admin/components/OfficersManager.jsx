@@ -242,7 +242,7 @@ function FormModal({ editingOfficer, form, setForm, fileRef, uploading, saving, 
           <button type="submit" form="om-form" disabled={saving||uploading} className="om-save-btn"
             style={{ flex:1, fontWeight:700, padding:'14px 0', borderRadius:12, fontSize:14, color:'white', border:'none', cursor:saving||uploading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, background:saving||uploading?'linear-gradient(135deg,#dba8a1,#e8b8a8)':'linear-gradient(135deg,#c0392b 0%,#e67e22 100%)', boxShadow:saving||uploading?'none':'0 4px 18px rgba(192,57,43,0.3)', transition:'all 0.18s', fontFamily:'inherit' }}>
             {saving&&<div style={{ width:14,height:14,borderRadius:'50%',border:'2.5px solid rgba(255,255,255,0.5)',borderTopColor:'white',animation:'omSpin 0.8s linear infinite' }} />}
-            {uploading?'Processing image…':saving?'Saving…':editingOfficer?'✓  Update Officer':'+  Add Officer'}
+            {uploading?'Processing image…':saving?'Saving…':editingOfficer?'  Update Officer':'  Add Officer'}
           </button>
           <button type="button" onClick={onClose} className="om-cancel-btn"
             style={{ flex:1, fontWeight:700, padding:'14px 0', borderRadius:12, fontSize:14, background:'#f5f0ed', border:'1px solid #e8ddd8', color:'#57534e', cursor:'pointer', transition:'all 0.15s', fontFamily:'inherit' }}>
@@ -348,7 +348,7 @@ export function OfficersManager() {
         </div>
         <button onClick={()=>setIsFormOpen(true)} className="om-add-btn"
           style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, fontWeight:700, padding:'11px 22px', borderRadius:12, color:'white', border:'none', cursor:'pointer', background:'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow:'0 4px 16px rgba(192,57,43,0.3)', transition:'all 0.18s', fontFamily:'inherit' }}>
-          <Plus size={15}/> Add Officer
+          Add Officer
         </button>
       </div>
 
