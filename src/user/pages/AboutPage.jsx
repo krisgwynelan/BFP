@@ -139,7 +139,7 @@ export function AboutPage() {
       {/* ── HERO BANNER ── */}
       <section className="abt-hero-pad" style={{
         position: 'relative',
-        padding: '56px 0 82px',
+        padding: '70px 0 82px',
         overflow: 'hidden',
         background: 'linear-gradient(135deg, #aa2112 0%, #811515 60%, #ea1e0f 100%)',
       }}>
@@ -206,10 +206,10 @@ export function AboutPage() {
 
               <div className="abt-stat-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 32 }}>
                 {[
-                  { val: '24/7', label: 'Emergency Response', icon: '🚒' },
-                  { val: '35', label: 'Barangays Covered', icon: '📍' },
-                  { val: 'RA 9514', label: 'Fire Code Authority', icon: '⚖️' },
-                  { val: 'Reg. X', label: 'Regional Jurisdiction', icon: '🗺️' },
+                  { val: '24/7', label: 'Emergency Response', },
+                  { val: '35', label: 'Barangays Covered',  },
+                  { val: 'RA 9514', label: 'Fire Code Authority',  },
+                  { val: 'Reg. X', label: 'Regional Jurisdiction',  },
                 ].map(({ val, label, icon }) => (
                   <div key={label} className="abt-stat-pill">
                     <span style={{ fontSize: 20 }}>{icon}</span>
@@ -422,14 +422,6 @@ export function AboutPage() {
 
             <div className="abt-cta-flex abt-cta-inner" style={{ position: 'relative', zIndex: 1, padding: '40px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 28 }}>
               <div className="abt-cta-icon-text" style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, minWidth: 260 }}>
-                <div style={{
-                  width: 68, height: 68, borderRadius: 18, flexShrink: 0,
-                  background: 'linear-gradient(135deg, #8b1a0e, #c0392b)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 8px 28px rgba(192,57,43,0.32)',
-                }}>
-                  <Flame size={30} style={{ color: 'white' }} />
-                </div>
                 <div>
                   <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.22em', color: '#c0392b', marginBottom: 5 }}>Bureau of Fire Protection</p>
                   <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(1.4rem, 3vw, 2rem)', letterSpacing: '0.04em', color: '#1a1714', lineHeight: 1, marginBottom: 7 }}>
@@ -441,9 +433,9 @@ export function AboutPage() {
 
               <div className="abt-cta-stats" style={{ display: 'flex', flexShrink: 0 }}>
                 {[
-                  { label: 'Established', value: '1990', icon: '📅' },
-                  { label: 'Coverage', value: '35 Brgy.', icon: '📍' },
-                  { label: 'Response', value: '24 / 7', icon: '🚒' },
+                  { label: 'Established', value: '1990', },
+                  { label: 'Coverage', value: '35 Brgy.', },
+                  { label: 'Response', value: '24 / 7', },
                 ].map(({ label, value, icon }, i) => (
                   <div key={label} style={{ textAlign: 'center', padding: '14px 22px', borderLeft: i > 0 ? '1px solid #ece6e0' : 'none' }}>
                     <span style={{ fontSize: 15, display: 'block', marginBottom: 4 }}>{icon}</span>

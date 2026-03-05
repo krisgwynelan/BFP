@@ -500,7 +500,7 @@ export function HomePage() {
                                 <Tag size={12} /> {featured.report.category}
                               </span>
                             </div>
-                            <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2.2rem,5vw,4.2rem)', letterSpacing: '.04em', lineHeight: 1.0, marginBottom: 14, textShadow: '0 2px 20px rgba(0,0,0,0.8)', color: 'white' }}>
+                            <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(2.2rem,5vw,2.2rem)', letterSpacing: '.04em', lineHeight: 1.0, marginBottom: 14, textShadow: '0 2px 20px rgba(0,0,0,0.8)', color: 'white' }}>
                               {featured.report.title}
                             </h3>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, color: 'rgba(255,255,255,0.75)' }}>
@@ -509,9 +509,6 @@ export function HomePage() {
                                 {formatDate(featured.report.date)}
                               </span>
                             </div>
-                            <p style={{ fontFamily: "'Barlow',sans-serif", fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                              {featured.report.description}
-                            </p>
                           </div>
                         </div>
                       </>
@@ -622,9 +619,6 @@ export function HomePage() {
                             <h3 style={{ fontFamily: "'Barlow',sans-serif", fontWeight: 800, fontSize: 20, color: '#1A1210', lineHeight: 1.25, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                               {report.title}
                             </h3>
-                            <p style={{ fontFamily: "'Barlow',sans-serif", fontWeight: 400, fontSize: 17, color: '#6B6258', lineHeight: 1.72, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', flex: 1 }}>
-                              {report.description || 'No description available.'}
-                            </p>
                             <div style={{ height: 2.5, background: `linear-gradient(90deg,${getCategoryBg(report.category)},${getCategoryBg(report.category)}66,transparent)`, borderRadius: 1, marginTop: 6 }} />
                           </div>
                         </div>
@@ -689,20 +683,18 @@ export function HomePage() {
             <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', fontFamily: "'Bebas Neue',sans-serif", fontWeight: 900, fontSize: 'clamp(5rem,14vw,11rem)', lineHeight: 1, color: 'rgba(100,60,20,.04)', pointerEvents: 'none', userSelect: 'none', whiteSpace: 'nowrap', letterSpacing: '.04em' }}>BFP COGON</div>
             <div className="hp-cta-inner" style={{ position: 'relative', zIndex: 1, padding: '38px 44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 32 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 22, flex: 1, minWidth: 200 }}>
-                <div style={{ width: 62, height: 62, borderRadius: 16, background: `linear-gradient(135deg,${D.redDk},${D.red})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 10px 28px ${D.red}33`, flexShrink: 0 }}>
-                  <Flame size={28} style={{ color: 'white' }} />
-                </div>
+
                 <div>
                   <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.16em', color: D.red, marginBottom: 7, fontFamily: "'Barlow Condensed',sans-serif" }}>Bureau of Fire Protection</p>
-                  <h3 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontWeight: 800, fontSize: 'clamp(1.1rem,2vw,1.55rem)', color: D.hi, lineHeight: 1.15, marginBottom: 7 }}>Lingkod Bayan, Ipaglaban ang Kaligtasan</h3>
+                  <h3 style={{ fontFamily: "'Poppins',Georgia,serif", fontWeight: 800, fontSize: 'clamp(1.1rem,2vw,1.55rem)', color: D.hi, lineHeight: 1.15, marginBottom: 7 }}>Lingkod Bayan, Ipaglaban ang Kaligtasan</h3>
                   <p style={{ fontSize: 13, color: D.lo, fontWeight: 500, fontFamily: "'Barlow',sans-serif", letterSpacing: '.01em' }}>BFP Station 1 · Cogon · Cagayan de Oro City · Region X</p>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'stretch', borderLeft: `1.5px solid ${D.br}`, paddingLeft: 32, flexShrink: 0 }}>
                 {[
-                  { label: 'Established', value: '1990',     icon: '📅' },
-                  { label: 'Coverage',    value: '35 Brgy.', icon: '📍' },
-                  { label: 'Response',    value: '24 / 7',   icon: '🚒' },
+                  { label: 'Established', value: '1990',     },
+                  { label: 'Coverage',    value: '35 Brgy.', },
+                  { label: 'Response',    value: '24 / 7',   },
                 ].map(({ label, value, icon }, i) => (
                   <div key={label}
                     style={{ textAlign: 'center', padding: '6px 26px', borderLeft: i > 0 ? `1.5px solid ${D.br}` : 'none', transition: 'background .2s', borderRadius: 6 }}
