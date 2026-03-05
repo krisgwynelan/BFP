@@ -198,8 +198,8 @@ export function AboutPage() {
                   { title: 'Our People', text: 'Our team of trained firefighters, rescue personnel, fire safety inspectors, and administrative staff work around the clock in unwavering service to the community.' },
                 ].map(({ title, text }) => (
                   <div key={title} className="abt-tl-item">
-                    <p style={{ fontSize: 25, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#c0392b', marginBottom: 4 }}>{title}</p>
-                    <p style={{ fontSize: 17, lineHeight: 1.78, color: '#6b6460', margin: 0 }}>{text}</p>
+                    <p style={{ fontSize: 21, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#c0392b', marginBottom: 4 }}>{title}</p>
+                    <p style={{ fontSize: 15, lineHeight: 1.78, color: '#6b6460', margin: 0 }}>{text}</p>
                   </div>
                 ))}
               </div>
@@ -316,7 +316,7 @@ export function AboutPage() {
         <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <p style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
+              <span style={{ display: 'inline-block', width: 24, height: 2,  background: '#c0392b', borderRadius: 2 }} />
               Guiding Principles
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
             </p>
@@ -328,7 +328,7 @@ export function AboutPage() {
             </p>
           </div>
 
-          <div className="abt-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+          <div className="abt-3col" style={{ display: 'grid', textAlign: 'justify', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {[
               {
                 icon: <Target size={22} style={{ color: '#c0392b' }} />,
@@ -340,10 +340,9 @@ export function AboutPage() {
               },
               {
                 icon: <Eye size={22} style={{ color: '#1d4ed8' }} />,
-                label: 'Our Vision', badge: '2034',
+                label: 'Our Vision', 
                 bar: 'linear-gradient(90deg, #1d4ed8, #3b82f6)',
                 iconBg: 'rgba(29,78,216,0.08)', iconBorder: 'rgba(29,78,216,0.18)',
-                badgeColor: '#1d4ed8', badgeBg: 'rgba(29,78,216,0.08)', badgeBorder: 'rgba(29,78,216,0.18)',
                 text: 'A modern  and trusted fire & emergency service building safe and resilient communities',
               },
               {
@@ -362,7 +361,6 @@ export function AboutPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', letterSpacing: '0.04em', color: '#1a1714' }}>{label}</span>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: badgeColor, textTransform: 'uppercase', letterSpacing: '0.1em', background: badgeBg, border: `1px solid ${badgeBorder}`, padding: '2px 9px', borderRadius: 999 }}>{badge}</span>
                 </div>
                 <div style={{ width: 28, height: 2, background: bar, borderRadius: 1, marginBottom: 16 }} />
                 <p style={{ fontSize: 15, lineHeight: 1.82, color: '#6b6460', margin: 0 }}>{text}</p>

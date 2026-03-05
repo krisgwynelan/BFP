@@ -20,7 +20,7 @@ const CAT = {
     strip: 'linear-gradient(135deg,#7f2010,#c0392b)',
     glow: 'rgba(127,32,16,0.13)',
     leaderGlow: 'rgba(192,57,43,0.22)',
-    leaderBorder: '#e0856a',
+    leaderBorder: '#f95656',
   },
   'EMS': {
     Icon: HeartPulse,

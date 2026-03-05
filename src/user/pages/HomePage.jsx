@@ -322,7 +322,7 @@ export function HomePage() {
     if (featuredSlides.length < 2) return;
     autoRef.current = setInterval(() => {
       setFeaturedIdx(p => (p + 1) % featuredSlides.length);
-    }, 5000);
+    }, 60000);
   }, [featuredSlides.length]);
 
   useEffect(() => { startAuto(); return () => clearInterval(autoRef.current); }, [startAuto]);
