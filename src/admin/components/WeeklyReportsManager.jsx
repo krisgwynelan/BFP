@@ -165,9 +165,9 @@ function ImageUploader({ images, onChange }) {
 // ─── Card image mini-slider ───────────────────────────────────────────────────
 function CardImages({ images }) {
   const [idx, setIdx] = useState(0);
-  if (!images.length) return <div style={{ height: 192, background: '#f5f0ed' }} />;
+  if (!images.length) return <div style={{ height: 220, background: '#f5f0ed', flexShrink: 0 }} />;
   return (
-    <div style={{ position: 'relative', height: 192, background: '#f5f0ed', overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{ position: 'relative', height: 220, background: '#f5f0ed', overflow: 'hidden', flexShrink: 0 }}>
       <img src={images[idx]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.25s' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(28,25,23,0.4),transparent 55%)' }} />
       {images.length > 1 && (
@@ -408,12 +408,12 @@ function ReportCard({ report, onEdit, onDelete, isArchived }) {
 
   return (
     <div className={`report-card${isArchived ? ' archived' : ''}`}>
-      <div style={{ position: 'relative' }}>
+      {/* Fixed-height image zone */}
+      <div style={{ position: 'relative', flexShrink: 0 }}>
         <CardImages images={imgs} />
         <span className={`absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide ${s.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{report.category}
         </span>
-
         {isArchived ? (
           <span style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(120,113,108,0.82)', backdropFilter: 'blur(6px)', color: 'white', fontSize: 9, fontWeight: 800, padding: '3px 9px', borderRadius: 20, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             Event History
@@ -426,32 +426,64 @@ function ReportCard({ report, onEdit, onDelete, isArchived }) {
         )}
       </div>
 
-      <div style={{ padding: 18, display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: isArchived ? '#c4b5b0' : '#a8a29e' }}>{fmtDate(report.date)}</span>
+      {/* Body — flex: 1 so action buttons always stick to the bottom */}
+      <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        {/* Date + photo count */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, flexShrink: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: isArchived ? '#c4b5b0' : '#a8a29e' }}>{fmtDate(report.date)}</span>
           {imgs.length > 1 && (
-            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 600, color: isArchived ? '#d6ccc8' : '#c4b5b0' }}>
-              <ImageIcon size={10} /> {imgs.length}
+            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: isArchived ? '#d6ccc8' : '#c4b5b0' }}>
+              <ImageIcon size={11} /> {imgs.length}
             </span>
           )}
         </div>
-        <h3 style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.4, color: isArchived ? '#78716c' : '#1c1917', margin: '0 0 8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+
+        {/* Title — always 2 lines max */}
+        <h3 style={{
+          fontWeight: 800, fontSize: 20, lineHeight: 1.35,
+          color: isArchived ? '#78716c' : '#1c1917',
+          margin: '0 0 10px', flexShrink: 0,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }}>
           {report.title}
         </h3>
-        <p style={{ fontSize: 12, lineHeight: 1.7, color: isArchived ? '#a8a29e' : '#78716c', margin: '0 0 auto', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {report.description}
-        </p>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, paddingTop: 14, borderTop: '1px solid #f5ede9' }}>
-          <button onClick={() => onEdit(report)}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '10px 0', borderRadius: 10, background: isArchived ? 'rgba(120,113,108,0.06)' : 'rgba(59,130,246,0.06)', border: `1.5px solid ${isArchived ? 'rgba(120,113,108,0.15)' : 'rgba(59,130,246,0.15)'}`, color: isArchived ? '#78716c' : '#2563eb', cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Edit size={12} /> Edit
-          </button>
-          <button onClick={() => onDelete(report)}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '10px 0', borderRadius: 10, background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b', cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Trash2 size={12} /> Delete
-          </button>
+        {/*
+          Description — FIXED height box, scrollable.
+          No expand/collapse, no layout shift, grid never moves.
+          Users scroll inside the box to read long descriptions.
+        */}
+        <div
+          className="wrm-desc-scroll"
+          style={{
+            height: '5.16em',   /* exactly 3 lines at lineHeight 1.72 */
+            flexShrink: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            paddingRight: 4,
+            marginBottom: 16,
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#e8d5d0 transparent',
+          }}
+        >
+          <p style={{ fontSize: 14, lineHeight: 1.72, color: isArchived ? '#a8a29e' : '#78716c', margin: 0 }}>
+            {report.description}
+          </p>
         </div>
+      </div>
+
+      {/* Action buttons — always pinned to bottom */}
+      <div style={{ padding: '12px 20px 18px', flexShrink: 0, borderTop: '1px solid #f5ede9', display: 'flex', gap: 8 }}>
+        {!isArchived && (
+          <button onClick={() => onEdit(report)}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 700, padding: '11px 0', borderRadius: 10, background: 'rgba(59,130,246,0.06)', border: '1.5px solid rgba(59,130,246,0.15)', color: '#2563eb', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Edit size={13} /> Edit
+          </button>
+        )}
+        <button onClick={() => onDelete(report)}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 700, padding: '11px 0', borderRadius: 10, background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.15)', color: '#c0392b', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <Trash2 size={13} /> Delete
+        </button>
       </div>
     </div>
   );
@@ -486,7 +518,7 @@ export function WeeklyReportsManager() {
   const [editingReport, setEditingReport] = useState(null);
   const [deleteTarget,  setDeleteTarget]  = useState(null);
   const [deleting,      setDeleting]      = useState(false);
-  const [tab,           setTab]           = useState('live'); // 'live' | 'archived'
+  const [tab,           setTab]           = useState('live');
 
   const [formData, setFormData] = useState({
     images: [], title: '', description: '',
@@ -536,7 +568,7 @@ export function WeeklyReportsManager() {
           return db - da;
         }));
         toast.success('Report published!');
-        setTab('live'); // jump to live tab so they see the new post
+        setTab('live');
       }
       resetForm();
     } catch (err) {
@@ -589,31 +621,56 @@ export function WeeklyReportsManager() {
         @keyframes wrmPulse  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.45;transform:scale(0.65)} }
         @keyframes wrmFadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
-        .report-card { background:white; border:1.5px solid #f0e8e5; border-radius:16px; overflow:hidden; transition:all 0.22s ease; display:flex; flex-direction:column; animation:wrmFadeIn 0.28s ease both; }
-        .report-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(192,57,43,0.1); border-color:#e8c4bc; }
-        .report-card.archived:hover { box-shadow:0 8px 24px rgba(0,0,0,0.07); border-color:#ddd6d2; }
+        .report-card {
+          background: white;
+          border: 1.5px solid #f0e8e5;
+          border-radius: 16px;
+          overflow: visible;
+          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+          display: flex;
+          flex-direction: column;
+          animation: wrmFadeIn 0.28s ease both;
+          position: relative;
+          height: 100%;
+        }
+        .report-card > div:first-child { border-radius: 14px 14px 0 0; overflow: hidden; }
+        .report-card:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(192,57,43,0.1); border-color: #e8c4bc; }
+        .report-card.archived:hover { box-shadow: 0 8px 22px rgba(0,0,0,0.07); border-color: #ddd6d2; }
 
         .wrm-field:focus { border-color:#c0392b !important; box-shadow:0 0 0 3px rgba(192,57,43,0.08); outline:none; }
         .wrm-thumb-ctrl { opacity:0; transition:opacity 0.18s; }
         .wrm-thumb:hover .wrm-thumb-ctrl { opacity:1; }
 
-        .wrm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-        @media (max-width:900px)  { .wrm-grid { grid-template-columns:repeat(2,1fr) !important; } }
-        @media (max-width:580px)  { .wrm-grid { grid-template-columns:1fr !important; } }
-        @media (max-width:480px)  { .wrm-2col { grid-template-columns:1fr !important; } }
+        /* Slim scrollbar for description box */
+        .wrm-desc-scroll::-webkit-scrollbar { width: 3px; }
+        .wrm-desc-scroll::-webkit-scrollbar-track { background: transparent; }
+        .wrm-desc-scroll::-webkit-scrollbar-thumb { background: #e8d5d0; border-radius: 99px; }
+        .wrm-desc-scroll::-webkit-scrollbar-thumb:hover { background: #c4a9a3; }
+
+        .wrm-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+          align-items: stretch;
+        }
+        .wrm-grid > div { display: flex; flex-direction: column; }
+
+        @media (max-width:900px)  { .wrm-grid { grid-template-columns: repeat(2,1fr) !important; } }
+        @media (max-width:580px)  { .wrm-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width:480px)  { .wrm-2col { grid-template-columns: 1fr !important; } }
 
         .wrm-ph { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:24px; }
         @media (max-width:480px) { .wrm-ph { flex-direction:column; align-items:stretch; } .wrm-ph button { width:100%; justify-content:center; } }
 
         .wrm-tab-btn {
-          display:flex; align-items:center; gap:8px;
-          padding:10px 18px; border-radius:10px; border:none;
-          font-weight:700; font-size:13px; cursor:pointer;
-          transition:all 0.18s; font-family:inherit; white-space:nowrap;
-          background:transparent; color:#78716c;
+          display: flex; align-items: center; gap: 8px;
+          padding: 10px 18px; border-radius: 10px; border: none;
+          font-weight: 700; font-size: 13px; cursor: pointer;
+          transition: all 0.18s; font-family: inherit; white-space: nowrap;
+          background: transparent; color: #78716c;
         }
-        .wrm-tab-btn:hover { background:rgba(255,255,255,0.7); }
-        .wrm-tab-btn.active { background:white; color:#1c1917; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+        .wrm-tab-btn:hover { background: rgba(255,255,255,0.7); }
+        .wrm-tab-btn.active { background: white; color: #1c1917; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
       `}</style>
 
       {/* ── Page header ── */}
@@ -628,40 +685,23 @@ export function WeeklyReportsManager() {
         </div>
         <button onClick={() => setIsFormOpen(true)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, padding: '11px 22px', borderRadius: 12, color: 'white', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)', fontFamily: 'inherit' }}>
-          <Plus size={15} /> Add Report
+          Add Report
         </button>
       </div>
 
       {/* ── Tab switcher ── */}
       <div style={{ display: 'inline-flex', gap: 4, padding: 5, background: '#f0ece9', borderRadius: 13, marginBottom: 28 }}>
-        {/* Live */}
-        <button
-          className={`wrm-tab-btn${tab === 'live' ? ' active' : ''}`}
-          onClick={() => setTab('live')}
-        >
+        <button className={`wrm-tab-btn${tab === 'live' ? ' active' : ''}`} onClick={() => setTab('live')}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: tab === 'live' ? '#10b981' : '#c4b5b0', flexShrink: 0, animation: tab === 'live' ? 'wrmPulse 1.8s ease-in-out infinite' : 'none' }} />
           Live
-          <span style={{
-            fontSize: 10, fontWeight: 800, padding: '1px 7px', borderRadius: 20,
-            background: tab === 'live' ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.05)',
-            color: tab === 'live' ? '#059669' : '#a8a29e',
-          }}>
+          <span style={{ fontSize: 10, fontWeight: 800, padding: '1px 7px', borderRadius: 20, background: tab === 'live' ? 'rgba(16,185,129,0.12)' : 'rgba(0,0,0,0.05)', color: tab === 'live' ? '#059669' : '#a8a29e' }}>
             {activeReports.length}
           </span>
         </button>
-
-        {/* Archived/ Evenet History */}
-        <button
-          className={`wrm-tab-btn${tab === 'archived' ? ' active' : ''}`}
-          onClick={() => setTab('archived')}
-        >
+        <button className={`wrm-tab-btn${tab === 'archived' ? ' active' : ''}`} onClick={() => setTab('archived')}>
           <Archive size={13} style={{ color: tab === 'archived' ? '#78716c' : '#c4b5b0', flexShrink: 0 }} />
           Event History
-          <span style={{
-            fontSize: 10, fontWeight: 800, padding: '1px 7px', borderRadius: 20,
-            background: tab === 'archived' ? 'rgba(120,113,108,0.1)' : 'rgba(0,0,0,0.05)',
-            color: tab === 'archived' ? '#57534e' : '#a8a29e',
-          }}>
+          <span style={{ fontSize: 10, fontWeight: 800, padding: '1px 7px', borderRadius: 20, background: tab === 'archived' ? 'rgba(120,113,108,0.1)' : 'rgba(0,0,0,0.05)', color: tab === 'archived' ? '#57534e' : '#a8a29e' }}>
             {archivedReports.length}
           </span>
         </button>
@@ -672,7 +712,7 @@ export function WeeklyReportsManager() {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 15px', borderRadius: 11, background: 'rgba(120,113,108,0.05)', border: '1px solid rgba(120,113,108,0.12)', marginBottom: 22 }}>
           <Archive size={13} style={{ color: '#b5b0ac', flexShrink: 0, marginTop: 1 }} />
           <p style={{ fontSize: 12, color: '#a8a29e', lineHeight: 1.6, margin: 0 }}>
-            These reports are older than 7 days and <strong style={{ color: '#78716c' }}>not visible</strong> on the public homepage. You can still edit or delete them here.
+            These reports are older than 7 days and <strong style={{ color: '#78716c' }}>not visible</strong> on the public homepage. You can still delete them here.
           </p>
         </div>
       )}

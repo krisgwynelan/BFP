@@ -157,7 +157,7 @@ export function AboutPage() {
           </div>
           <h1 style={{
             fontFamily: "'Bebas Neue', sans-serif",
-            fontSize: 'clamp(2.8rem, 7vw, 5rem)',
+            fontSize: 'clamp(4.8rem, 7vw, 5rem)',
             letterSpacing: '0.05em',
             lineHeight: 1,
             color: 'white',
@@ -165,7 +165,7 @@ export function AboutPage() {
           }}>
             About Us
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, margin: 0 }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, margin: 0 }}>
             BFP Station 1 — Cogon · Cagayan de Oro City, Misamis Oriental
           </p>
         </div>
@@ -178,13 +178,13 @@ export function AboutPage() {
 
             {/* Left */}
             <div>
-              <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <p style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2, verticalAlign: 'middle' }} />
                 Who We Are
               </p>
               <h2 style={{
                 fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: 'clamp(2rem, 4vw, 3rem)', letterSpacing: '0.04em', lineHeight: 1.05,
+                fontSize: 'clamp(3rem, 4vw, 3rem)', letterSpacing: '0.04em', lineHeight: 1.05,
                 color: '#1a1714', marginBottom: 32,
               }}>
                 Station 1 Cogon<br />
@@ -198,8 +198,8 @@ export function AboutPage() {
                   { title: 'Our People', text: 'Our team of trained firefighters, rescue personnel, fire safety inspectors, and administrative staff work around the clock in unwavering service to the community.' },
                 ].map(({ title, text }) => (
                   <div key={title} className="abt-tl-item">
-                    <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#c0392b', marginBottom: 4 }}>{title}</p>
-                    <p style={{ fontSize: 13.5, lineHeight: 1.78, color: '#6b6460', margin: 0 }}>{text}</p>
+                    <p style={{ fontSize: 25, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#c0392b', marginBottom: 4 }}>{title}</p>
+                    <p style={{ fontSize: 17, lineHeight: 1.78, color: '#6b6460', margin: 0 }}>{text}</p>
                   </div>
                 ))}
               </div>
@@ -207,7 +207,7 @@ export function AboutPage() {
               <div className="abt-stat-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 32 }}>
                 {[
                   { val: '24/7', label: 'Emergency Response', icon: '🚒' },
-                  { val: '25+', label: 'Barangays Covered', icon: '📍' },
+                  { val: '35', label: 'Barangays Covered', icon: '📍' },
                   { val: 'RA 9514', label: 'Fire Code Authority', icon: '⚖️' },
                   { val: 'Reg. X', label: 'Regional Jurisdiction', icon: '🗺️' },
                 ].map(({ val, label, icon }) => (
@@ -277,22 +277,21 @@ export function AboutPage() {
       <section className="abt-values-section" style={{ background: '#f5f3f0', padding: '72px 0', borderBottom: '1px solid #e8e2dc' }}>
         <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div style={{ textAlign: 'center', marginBottom: 44 }}>
-            <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <p style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
               Core Values
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
             </p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(2rem, 4vw, 2.8rem)', letterSpacing: '0.05em', color: '#1a1714', margin: 0 }}>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3.5rem, 4vw, 2.8rem)', letterSpacing: '0.05em', color: '#1a1714', margin: 0 }}>
               The BFP Standard
             </h2>
           </div>
 
-          <div className="abt-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          <div className="abt-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {[
-              { icon: '⚡', title: 'Mabilis', sub: 'Rapid Response', desc: 'First to arrive. Every second counts — we minimize damage by acting decisively in every emergency.', color: '#c0392b' },
-              { icon: '🛡️', title: 'Mahusay', sub: 'Excellence', desc: 'Professionally trained personnel equipped with modern tools for effective fire suppression.', color: '#b45309' },
-              { icon: '🤝', title: 'Matapat', sub: 'Integrity', desc: 'Trusted public servants committed to honest, transparent, and accountable service to citizens.', color: '#1e4d8c' },
-              { icon: '❤️', title: 'Makabayan', sub: 'Patriotism', desc: 'Serving with love of country — protecting every life, every property, every single day.', color: '#15614a' },
+              { icon: '🔥', title: 'Pusong Nag-aalab', sub: 'Compassion rooted in courage and service', desc: 'First to arrive. Every second counts — we minimize damage by acting decisively in every emergency.', color: '#c0392b' },
+              { icon: '🛠️', title: 'Galing sa Gawain', sub: 'Competence that responds with reability', desc: 'Professionally trained personnel equipped with modern tools for effective fire suppression.', color: '#b45309' },
+              { icon: '🤝', title: 'Tapat na Paglilingkod', sub: 'Integrity grounded in faith and respect', desc: 'Trusted public servants committed to honest, transparent, and accountable service to citizens.', color: '#1e4d8c' },
             ].map(({ icon, title, sub, desc, color }) => (
               <div key={title} className="abt-val-card">
                 <div style={{
@@ -304,8 +303,8 @@ export function AboutPage() {
                   {icon}
                 </div>
                 <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.35rem', letterSpacing: '0.04em', color: '#1a1714', lineHeight: 1, marginBottom: 4 }}>{title}</p>
-                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color, marginBottom: 10 }}>{sub}</p>
-                <p style={{ fontSize: 12.5, lineHeight: 1.72, color: '#7a726e', margin: 0 }}>{desc}</p>
+                <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color, marginBottom: 10 }}>{sub}</p>
+                <p style={{ fontSize: 16, lineHeight: 1.72, color: '#7a726e', margin: 0 }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -316,15 +315,15 @@ export function AboutPage() {
       <section className="abt-mvv-section" style={{ background: 'white', padding: '88px 0', borderBottom: '1px solid #ece6e0' }}>
         <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <p style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
               Guiding Principles
               <span style={{ display: 'inline-block', width: 24, height: 2, background: '#c0392b', borderRadius: 2 }} />
             </p>
-            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)', letterSpacing: '0.05em', color: '#1a1714', margin: '0 0 10px' }}>
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3.2rem, 4.5vw, 3.2rem)', letterSpacing: '0.05em', color: '#1a1714', margin: '0 0 10px' }}>
               Mission, Vision & Mandate
             </h2>
-            <p style={{ fontSize: 13.5, color: '#8a827e', lineHeight: 1.75, maxWidth: 440, margin: '0 auto' }}>
+            <p style={{ fontSize: 15, color: '#8a827e', lineHeight: 1.75, maxWidth: 440, margin: '0 auto' }}>
               The principles that guide every action, decision, and service of BFP Station 1 — Cogon.
             </p>
           </div>
@@ -337,7 +336,7 @@ export function AboutPage() {
                 bar: 'linear-gradient(90deg, #c0392b, #e67e22)',
                 iconBg: 'rgba(192,57,43,0.08)', iconBorder: 'rgba(192,57,43,0.18)',
                 badgeColor: '#c0392b', badgeBg: 'rgba(192,57,43,0.08)', badgeBorder: 'rgba(192,57,43,0.18)',
-                text: 'We commit to prevent and suppress destructive fires, investigate their causes; enforce Fire Code and other related laws; respond to man-made and natural disasters and other emergencies.',
+                text: 'We protect life, property, and the environment through an integrated system of prevention, response, and investigation, strengthening public safety and community resilience.',
               },
               {
                 icon: <Eye size={22} style={{ color: '#1d4ed8' }} />,
@@ -345,7 +344,7 @@ export function AboutPage() {
                 bar: 'linear-gradient(90deg, #1d4ed8, #3b82f6)',
                 iconBg: 'rgba(29,78,216,0.08)', iconBorder: 'rgba(29,78,216,0.18)',
                 badgeColor: '#1d4ed8', badgeBg: 'rgba(29,78,216,0.08)', badgeBorder: 'rgba(29,78,216,0.18)',
-                text: 'A modern fire service fully capable of ensuring a fire-safe nation by 2034.',
+                text: 'A modern  and trusted fire & emergency service building safe and resilient communities',
               },
               {
                 icon: <FileText size={22} style={{ color: '#1e3a5f' }} />,
@@ -362,11 +361,11 @@ export function AboutPage() {
                   {icon}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.45rem', letterSpacing: '0.04em', color: '#1a1714' }}>{label}</span>
+                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', letterSpacing: '0.04em', color: '#1a1714' }}>{label}</span>
                   <span style={{ fontSize: 9, fontWeight: 800, color: badgeColor, textTransform: 'uppercase', letterSpacing: '0.1em', background: badgeBg, border: `1px solid ${badgeBorder}`, padding: '2px 9px', borderRadius: 999 }}>{badge}</span>
                 </div>
                 <div style={{ width: 28, height: 2, background: bar, borderRadius: 1, marginBottom: 16 }} />
-                <p style={{ fontSize: 13, lineHeight: 1.82, color: '#6b6460', margin: 0 }}>{text}</p>
+                <p style={{ fontSize: 15, lineHeight: 1.82, color: '#6b6460', margin: 0 }}>{text}</p>
               </div>
             ))}
           </div>
@@ -378,14 +377,14 @@ export function AboutPage() {
         <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 1.25rem' }}>
           <div className="abt-svc-layout" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 64, alignItems: 'start' }}>
             <div>
-              <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <p style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.24em', color: '#c0392b', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ display: 'inline-block', width: 22, height: 2, background: '#c0392b', borderRadius: 2 }} />
                 What We Do
               </p>
-              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(2rem, 4vw, 2.6rem)', letterSpacing: '0.05em', lineHeight: 1, color: '#1a1714', marginBottom: 14 }}>
+              <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(3.5rem, 4vw, 2.6rem)', letterSpacing: '0.05em', lineHeight: 1, color: '#1a1714', marginBottom: 14 }}>
                 Our Core<br />Services
               </h2>
-              <p style={{ fontSize: 13, lineHeight: 1.78, color: '#8a827e', margin: 0 }}>
+              <p style={{ fontSize: 15, lineHeight: 1.78, color: '#8a827e', margin: 0 }}>
                 From prevention to suppression, BFP Station 1 delivers comprehensive fire protection to every community under its jurisdiction.
               </p>
             </div>
@@ -400,8 +399,8 @@ export function AboutPage() {
                   <div style={{ width: 42, height: 42, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, border: `1.5px solid ${border}`, color: accent, marginBottom: 14 }}>
                     {icon}
                   </div>
-                  <p style={{ fontWeight: 700, fontSize: 13.5, color: '#1a1714', marginBottom: 7, lineHeight: 1.35 }}>{title}</p>
-                  <p style={{ fontSize: 12.5, lineHeight: 1.72, color: '#8a827e', margin: 0 }}>{desc}</p>
+                  <p style={{ fontWeight: 700, fontSize: 19, color: '#1a1714', marginBottom: 7, lineHeight: 1.35 }}>{title}</p>
+                  <p style={{ fontSize: 15, lineHeight: 1.72, color: '#8a827e', margin: 0 }}>{desc}</p>
                 </div>
               ))}
             </div>
@@ -445,7 +444,7 @@ export function AboutPage() {
               <div className="abt-cta-stats" style={{ display: 'flex', flexShrink: 0 }}>
                 {[
                   { label: 'Established', value: '1990', icon: '📅' },
-                  { label: 'Coverage', value: '25+ Brgy.', icon: '📍' },
+                  { label: 'Coverage', value: '35 Brgy.', icon: '📍' },
                   { label: 'Response', value: '24 / 7', icon: '🚒' },
                 ].map(({ label, value, icon }, i) => (
                   <div key={label} style={{ textAlign: 'center', padding: '14px 22px', borderLeft: i > 0 ? '1px solid #ece6e0' : 'none' }}>

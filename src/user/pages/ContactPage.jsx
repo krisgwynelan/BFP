@@ -248,7 +248,7 @@ export function ContactPage() {
             {[
               { val: '911', label: 'Emergency' },
               { val: '24/7', label: 'Response' },
-              { val: '25+', label: 'Barangays' },
+              { val: '35', label: 'Barangays' },
             ].map(({ val, label }) => (
               <div key={label} className="ct-hero-stat-chip" style={{ padding: '12px 20px', borderRadius: 14, textAlign: 'center', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(8px)' }}>
                 <p style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: '0.06em', color: 'white', lineHeight: 1 }}>{val}</p>
