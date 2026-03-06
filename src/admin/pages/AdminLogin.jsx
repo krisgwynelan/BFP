@@ -161,6 +161,7 @@ export function AdminLogin() {
           border: '1px solid rgba(192,57,43,0.3)',
           borderRadius: 14, padding: '18px 20px',
           backdropFilter: 'blur(12px)',
+         
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(192,57,43,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -173,7 +174,7 @@ export function AdminLogin() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {[
               { icon: <Shield size={13} />, text: 'This portal is exclusively for authorized BFP Station 1 Cogon personnel only. Unauthorized access is strictly prohibited.' },
-              { icon: <Lock size={13} />, text: 'All login attempts are monitored by Firebase Authentication. Too many failed attempts will temporarily lock access.' },
+              { icon: <Lock size={13} />, text: 'All login attempts are monitored. Too many failed attempts will temporarily lock access.' },
             ].map(({ icon, text }, i) => (
               <div key={i} className="al-note-item">
                 <div style={{ color: '#e67e22', flexShrink: 0, marginTop: 1 }}>{icon}</div>

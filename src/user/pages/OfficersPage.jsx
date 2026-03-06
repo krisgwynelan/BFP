@@ -85,16 +85,16 @@ const LOCAL_RA = {
 const abbr = (rank) => RANK_ABBREVIATIONS?.[rank] || LOCAL_RA[rank] || rank;
 
 // ─── Card size constants — edit these to resize all cards at once ─────────────
-const CARD_W         = 260;   // card width in px
-const CARD_MINW      = 180;   // card minimum width
-const CARD_RADIUS    = 20;    // card border radius
-const RING_OUTER     = 108;   // total avatar ring outer diameter
-const RING_PX_LEADER = 4;     // ring thickness for leader
-const RING_PX_MEMBER = 3;     // ring thickness for member
-const GAP_PX         = 3;     // white gap between ring and photo
-const STRIP_H_LEADER = 6;     // top color strip height for leader
-const STRIP_H_MEMBER = 4;     // top color strip height for member
-const ROWS_PER_PAGE  = 5;     // members per row in org chart
+const CARD_W         = 260;
+const CARD_MINW      = 180;
+const CARD_RADIUS    = 20;
+const RING_OUTER     = 108;
+const RING_PX_LEADER = 4;
+const RING_PX_MEMBER = 3;
+const GAP_PX         = 3;
+const STRIP_H_LEADER = 6;
+const STRIP_H_MEMBER = 4;
+const ROWS_PER_PAGE  = 5;
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 function Avatar({ src, name, size }) {
@@ -124,7 +124,6 @@ function Avatar({ src, name, size }) {
 }
 
 // ─── AvatarRing ───────────────────────────────────────────────────────────────
-// imgSize = ringSize - 2*ring - 2*gap → photo always fills perfectly
 function AvatarRing({ src, name, ringSize, ring, gap, strip, glow }) {
   const imgSize = ringSize - 2 * ring - 2 * gap;
   return (
@@ -165,6 +164,7 @@ function OrgMemberCard({ officer, c, isLeader = false }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="op-member-card"
       style={{
         position: 'relative',
         display: 'flex',
@@ -185,15 +185,11 @@ function OrgMemberCard({ officer, c, isLeader = false }) {
         transition: 'transform 0.22s ease, box-shadow 0.22s ease',
       }}
     >
-
-      {/* ── Card body ── */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         padding: `${isLeader ? 20 : 16}px 18px 18px`,
         flex: 1, width: '100%',
       }}>
-
-        {/* Avatar ring + rank pill */}
         <div style={{ position: 'relative', marginBottom: 18, flexShrink: 0 }}>
           <AvatarRing
             src={officer.profileImage}
@@ -218,7 +214,6 @@ function OrgMemberCard({ officer, c, isLeader = false }) {
           }}>{abbr(officer.rank)}</div>
         </div>
 
-        {/* Name */}
         <p style={{
           fontSize: isLeader ? 17 : 16,
           fontWeight: isLeader ? 800 : 700,
@@ -234,7 +229,6 @@ function OrgMemberCard({ officer, c, isLeader = false }) {
           wordBreak: 'break-word',
         }}>{officer.fullName}</p>
 
-        {/* Full rank */}
         <p style={{
           fontSize: 11.5, fontWeight: 500,
           color: c.pillColor,
@@ -244,15 +238,12 @@ function OrgMemberCard({ officer, c, isLeader = false }) {
           overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
         }}>{officer.rank}</p>
 
-        {/* Divider */}
         <div style={{
           width: '100%', height: 1,
           background: `linear-gradient(to right,transparent,${c.border},transparent)`,
           margin: '0 0 10px', flexShrink: 0,
         }} />
 
-
-        {/* Role */}
         {role && (
           <p style={{
             fontSize: 11.5, fontWeight: 500, color: '#78716c',
@@ -265,7 +256,6 @@ function OrgMemberCard({ officer, c, isLeader = false }) {
           }}>{role}</p>
         )}
 
-        {/* Contact */}
         {officer.contactNumber && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 4,
@@ -312,7 +302,6 @@ function OfficerCard({ officer }) {
         transition: 'transform 0.2s, box-shadow 0.2s',
       }}
     >
-      {/* Top strip */}
       <div style={{
         width: '100%', height: stripH,
         background: c.strip,
@@ -320,7 +309,6 @@ function OfficerCard({ officer }) {
         flexShrink: 0,
       }} />
 
-      {/* Crown pill */}
       {officer.isLeader && (
         <div style={{
           position: 'absolute',
@@ -339,7 +327,6 @@ function OfficerCard({ officer }) {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: `${officer.isLeader ? 20 : 16}px 14px 16px`, flex: 1, width: '100%' }}>
-        {/* Avatar */}
         <div style={{ position: 'relative', marginBottom: 18, flexShrink: 0 }}>
           <AvatarRing
             src={officer.profileImage}
@@ -420,8 +407,7 @@ function OrgSection({ cat, officers }) {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       width: '100%', animation: 'opFU 0.24s ease both',
     }}>
-      {/* Section label */}
-      <div style={{
+      <div className="op-section-label" style={{
         display: 'inline-flex', alignItems: 'center', gap: 12,
         padding: '10px 20px 10px 12px', borderRadius: 14,
         background: c.bg, border: `1.5px solid ${c.border}`,
@@ -433,7 +419,7 @@ function OrgSection({ cat, officers }) {
         }}>
           <Icon size={17} color="white" strokeWidth={2.2} />
         </div>
-        <div style={{ lineHeight: 1.25 }}>
+        <div className="op-section-label-text" style={{ lineHeight: 1.25 }}>
           <p style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: c.color, margin: 0 }}>{c.label}</p>
           <p style={{ fontSize: 10.5, fontWeight: 500, color: c.pillColor, margin: 0 }}>{c.desc}</p>
         </div>
@@ -443,10 +429,8 @@ function OrgSection({ cat, officers }) {
         }}>{officers.length}</span>
       </div>
 
-      {/* Stem */}
       <div style={{ width: 2, height: 18, background: `linear-gradient(to bottom,${c.border},transparent)`, marginBottom: 10 }} />
 
-      {/* Leader */}
       {leader ? (
         <>
           <OrgMemberCard officer={leader} c={c} isLeader />
@@ -477,11 +461,10 @@ function OrgSection({ cat, officers }) {
         </div>
       )}
 
-      {/* Member rows */}
       {members.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22, width: '100%' }}>
           {rows.map((row, ri) => (
-            <div key={ri} style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'nowrap' }}>
+            <div key={ri} className="op-row" style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'nowrap' }}>
               {row.map(o => <OrgMemberCard key={o.id} officer={o} c={c} isLeader={false} />)}
             </div>
           ))}
@@ -543,10 +526,69 @@ export function OfficersPage() {
         .op-fdd { animation:opFU 0.13s ease; }
         .op-tab { display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;font-size:11px;font-weight:700;font-family:inherit;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;border:1.5px solid #e5e2df;background:white;color:#78716c;white-space:nowrap;transition:all 0.16s; }
         .op-tab:hover { border-color:#d6c4bc;color:#44403c;transform:translateY(-1px); }
+
+        /* ═══ RESPONSIVE BREAKPOINTS ═══ */
+
+        /* Tablet ≤ 900px */
+        @media (max-width: 900px) {
+          .op-hero-pad   { padding: 48px 16px 56px !important; }
+          .op-hero-stats { gap: 8px !important; }
+          .op-filters-section { padding: 18px 16px 0 !important; }
+          .op-officers-section { padding: 20px 16px 48px !important; }
+          .op-contact-section  { padding: 20px 16px 26px !important; }
+          .op-filter-row { gap: 8px !important; }
+          /* org rows: horizontal scroll */
+          .op-row { overflow-x: auto; flex-wrap: nowrap !important; padding-bottom: 8px; width: 100%; }
+          .op-member-card { flex-shrink: 0; }
+        }
+
+        /* Mobile ≤ 640px */
+        @media (max-width: 640px) {
+          .op-hero-h1  { font-size: clamp(2rem,9vw,3rem) !important; }
+          .op-hero-pad { padding: 36px 14px 44px !important; }
+          .op-hero-desc { font-size: 13px !important; }
+          .op-hero-stats { flex-wrap: wrap !important; }
+          .op-hero-stat  { flex: 1 1 calc(50% - 8px) !important; }
+          .op-filters-section { padding: 14px 14px 0 !important; }
+          .op-filter-row { flex-direction: column !important; align-items: stretch !important; }
+          .op-filter-row > div { width: 100% !important; }
+          .op-rank-btn { width: 100% !important; min-width: unset !important; }
+          .op-officers-section { padding: 16px 12px 40px !important; }
+          .op-contact-section  { padding: 16px 14px 24px !important; }
+          .op-contact-inner { flex-direction: column !important; }
+          /* flat grid: smaller min-width on mobile */
+          .op-flat-grid { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)) !important; gap: 14px !important; }
+          /* org rows: scroll + smaller cards */
+          .op-row { overflow-x: auto; flex-wrap: nowrap !important; padding-bottom: 8px; justify-content: flex-start !important; width: 100%; }
+          .op-member-card { flex-shrink: 0; width: 200px !important; min-width: 160px !important; }
+          /* root node compact */
+          .op-root-node { padding: 12px 18px !important; gap: 10px !important; }
+          .op-root-node-icon { width: 34px !important; height: 34px !important; }
+          .op-root-node-title { font-size: 20px !important; }
+          .op-root-node-sub { font-size: 9px !important; }
+          /* section label compact */
+          .op-section-label { padding: 8px 14px 8px 10px !important; gap: 8px !important; }
+          .op-section-label-text p:first-child { font-size: 11px !important; }
+        }
+
+        /* Small mobile ≤ 420px */
+        @media (max-width: 420px) {
+          .op-hero-stat { flex: 1 1 100% !important; }
+          .op-flat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+          .op-member-card { width: 168px !important; min-width: 140px !important; }
+          .op-hero-badge span { letter-spacing: 0.1em !important; font-size: 9px !important; }
+          .op-hero-badge svg  { display: none; }
+        }
+
+        /* horizontal scrollbar styling for org rows */
+        .op-row::-webkit-scrollbar { height: 4px; }
+        .op-row::-webkit-scrollbar-track { background: #f0ece8; border-radius: 4px; }
+        .op-row::-webkit-scrollbar-thumb { background: #d6c4bc; border-radius: 4px; }
+        .op-row { scrollbar-width: thin; scrollbar-color: #d6c4bc #f0ece8; }
       `}</style>
 
       {/* ── HERO ── */}
-      <section style={{
+      <section className="op-hero-pad" style={{
         position: 'relative', overflow: 'hidden',
         padding: '68px 20px 76px',
         background: 'linear-gradient(150deg,#7f1d1d 0%,#991b1b 38%,#c0392b 72%,#d35400 100%)',
@@ -557,7 +599,7 @@ export function OfficersPage() {
           backgroundSize: '48px 48px',
         }} />
         <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <div style={{
+          <div className="op-hero-badge" style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 8,
             background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', marginBottom: 20,
           }}>
@@ -566,19 +608,19 @@ export function OfficersPage() {
               BFP Station 1 · Station Personnel
             </span>
           </div>
-          <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(3rem,8vw,5.5rem)', letterSpacing: '0.04em', color: 'white', lineHeight: 1, margin: '0 0 14px' }}>
+          <h1 className="op-hero-h1" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 'clamp(3rem,8vw,5.5rem)', letterSpacing: '0.04em', color: 'white', lineHeight: 1, margin: '0 0 14px' }}>
             Our Officers
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, maxWidth: 460, margin: '0 auto 30px', lineHeight: 1.75 }}>
+          <p className="op-hero-desc" style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, maxWidth: 460, margin: '0 auto 30px', lineHeight: 1.75 }}>
             Meet the dedicated men and women serving<br />BFP Station 1 — Cogon, Cagayan de Oro City
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
+          <div className="op-hero-stats" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
             {[
               { v: loading ? '…' : sorted.length, l: 'Active Officers' },
               { v: '24 / 7', l: 'On Duty' },
               { v: 'Station 1', l: 'Assignment' },
             ].map(({ v, l }) => (
-              <div key={l} style={{ padding: '10px 18px', borderRadius: 10, textAlign: 'center', background: 'rgba(255,255,255,0.11)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', minWidth: 88 }}>
+              <div key={l} className="op-hero-stat" style={{ padding: '10px 18px', borderRadius: 10, textAlign: 'center', background: 'rgba(255,255,255,0.11)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', minWidth: 88 }}>
                 <p style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, letterSpacing: '0.06em', color: 'white', lineHeight: 1, margin: 0 }}>{v}</p>
                 <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.55)', margin: '3px 0 0' }}>{l}</p>
               </div>
@@ -588,8 +630,8 @@ export function OfficersPage() {
       </section>
 
       {/* ── FILTERS ── */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px 0' }}>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+      <section className="op-filters-section" style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px 0' }}>
+        <div className="op-filter-row" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
           <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
             <Search size={14} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#c0392b', pointerEvents: 'none' }} />
             <input
@@ -602,6 +644,7 @@ export function OfficersPage() {
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setRankOpen(p => !p)}
+              className="op-rank-btn"
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', minWidth: 168, justifyContent: 'space-between', background: selRank !== 'All Ranks' ? 'rgba(192,57,43,0.06)' : 'white', border: `1.5px solid ${selRank !== 'All Ranks' ? 'rgba(192,57,43,0.25)' : '#e8e2de'}`, color: selRank !== 'All Ranks' ? '#c0392b' : '#78716c', fontFamily: "'DM Sans',sans-serif" }}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -646,7 +689,7 @@ export function OfficersPage() {
       </section>
 
       {/* ── OFFICERS DISPLAY ── */}
-      <section style={{ maxWidth: 1400, margin: '0 auto', padding: '28px 20px 60px' }}>
+      <section className="op-officers-section" style={{ maxWidth: 1400, margin: '0 auto', padding: '28px 20px 60px' }}>
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 0' }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2.5px solid #c0392b', borderTopColor: 'transparent', animation: 'opSpin 0.9s linear infinite', marginBottom: 14 }} />
@@ -668,17 +711,17 @@ export function OfficersPage() {
 
             {/* Root node */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{
+              <div className="op-root-node" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 14, padding: '15px 30px',
                 borderRadius: 18, background: 'linear-gradient(135deg,#7f1d1d,#c0392b)',
                 boxShadow: '0 8px 32px rgba(127,29,29,0.32)',
               }}>
-                <div style={{ width: 42, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="op-root-node-icon" style={{ width: 42, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <ShieldCheck size={22} color="white" strokeWidth={2.2} />
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.65)', margin: '0 0 1px' }}>BFP Station 1</p>
-                  <p style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: '0.06em', color: 'white', margin: 0, lineHeight: 1 }}>Organizational Chart</p>
+                  <p className="op-root-node-sub" style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.65)', margin: '0 0 1px' }}>BFP Station 1</p>
+                  <p className="op-root-node-title" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, letterSpacing: '0.06em', color: 'white', margin: 0, lineHeight: 1 }}>Organizational Chart</p>
                 </div>
               </div>
               <div style={{ width: 2, height: 32, background: 'linear-gradient(to bottom,#c0392b,#ede8e5)' }} />
@@ -721,7 +764,7 @@ export function OfficersPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
                     {Array.from({ length: Math.ceil(unc.length / ROWS_PER_PAGE) }, (_, ri) => (
-                      <div key={ri} style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+                      <div key={ri} className="op-row" style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
                         {unc.slice(ri * ROWS_PER_PAGE, ri * ROWS_PER_PAGE + ROWS_PER_PAGE).map(o => (
                           <OrgMemberCard key={o.id} officer={o} c={FALLBACK} isLeader={false} />
                         ))}
@@ -735,16 +778,16 @@ export function OfficersPage() {
 
         ) : (
           /* ── Flat / filtered grid ── */
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 20, alignItems: 'start' }}>
+          <div className="op-flat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 20, alignItems: 'start' }}>
             {filtered.map(o => <OfficerCard key={o.id} officer={o} />)}
           </div>
         )}
       </section>
 
       {/* ── CONTACT BAR ── */}
-      <section style={{ background: 'white', borderTop: '1.5px solid #ede8e5', padding: '26px 20px 34px' }}>
+      <section className="op-contact-section" style={{ background: 'white', borderTop: '1.5px solid #ede8e5', padding: '26px 20px 34px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 20px', borderRadius: 13, background: 'white', border: '1.5px solid #ede8e5', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+          <div className="op-contact-inner" style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 20px', borderRadius: 13, background: 'white', border: '1.5px solid #ede8e5', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'rgba(192,57,43,0.07)', border: '1.5px solid rgba(192,57,43,0.14)' }}>
               <Award size={18} style={{ color: '#c0392b' }} />
             </div>
