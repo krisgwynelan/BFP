@@ -26,13 +26,20 @@ const DEFAULT_DATA = {
   ],
 };
 
+// ─── Sort barangays A → Z using locale-aware natural sort ─────────────────────
+function sortBarangays(list) {
+  return [...list].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+  );
+}
+
 function normalise(raw) {
-  if (!raw) return DEFAULT_DATA;
+  if (!raw) return { ...DEFAULT_DATA, barangays: sortBarangays(DEFAULT_DATA.barangays) };
   return {
     ...DEFAULT_DATA,
     ...raw,
     officeHours: Array.isArray(raw.officeHours) ? raw.officeHours : DEFAULT_DATA.officeHours,
-    barangays:   Array.isArray(raw.barangays)   ? raw.barangays   : DEFAULT_DATA.barangays,
+    barangays:   sortBarangays(Array.isArray(raw.barangays) ? raw.barangays : DEFAULT_DATA.barangays),
   };
 }
 
@@ -121,7 +128,7 @@ export function ContactPage() {
       setContact(normalise(info));
     } catch (err) {
       console.error('Failed to load contact info:', err);
-      setContact(DEFAULT_DATA);
+      setContact(normalise(null));
     }
   };
 
