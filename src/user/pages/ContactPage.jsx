@@ -445,7 +445,7 @@ export function ContactPage() {
                   <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#c0392b' }}>Coverage Area</span>
                 </div>
                 <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', letterSpacing: '0.05em', color: '#1c1917', lineHeight: 1 }}>
-                  Barangays Under Jurisdiction
+                  Barangays
                 </h2>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

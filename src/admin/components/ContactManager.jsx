@@ -285,7 +285,7 @@ export function ContactManager() {
               <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid #f5ede9' }}>
                 <Shield size={11} style={{ color: '#c0392b' }} />
                 <p className="text-[11px] font-semibold" style={{ color: '#a8a29e' }}>
-                  {contact.barangays?.length || 0} barangays under jurisdiction
+                  {contact.barangays?.length || 0} barangays 
                 </p>
               </div>
             </div>
