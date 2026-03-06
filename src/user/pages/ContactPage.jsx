@@ -275,7 +275,7 @@ export function ContactPage() {
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 6 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0, animation: 'pulseDot 2s ease-in-out infinite' }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>Live & Monitored 24 Hours, 7 Days a Week</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a' }}>Live & Monitored </span>
                 </div>
               </div>
             </div>
