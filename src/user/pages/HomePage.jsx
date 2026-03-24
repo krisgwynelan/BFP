@@ -3,10 +3,9 @@ import { getWeeklyReports, getOfficers } from '../../utils/storage';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  ArrowRight, Shield, Phone, ChevronDown,
+  ArrowRight, Shield, Phone,
   Flame, AlertTriangle, Users,
-  ChevronLeft, ChevronRight, Image as ImageIcon, X,
-  Eye, Play, Calendar, Tag,
+  X, Eye, Tag,
 } from 'lucide-react';
 import Fire from '/Fire.jpg';
 import { WeeklyReportsSlideshow } from '../components/WeeklyReportsSlideshow';
@@ -29,15 +28,6 @@ const D = {
   amb:   '#A87800',
 };
 
-const CAT_STYLE = {
-  Event:       { accent: '#1558B0', bg: 'rgba(21,88,176,0.08)',  border: 'rgba(21,88,176,0.25)' },
-  Training:    { accent: '#166534', bg: 'rgba(22,101,52,0.08)',  border: 'rgba(22,101,52,0.25)' },
-  Advisory:    { accent: '#92400E', bg: 'rgba(146,64,14,0.08)',  border: 'rgba(146,64,14,0.25)' },
-  Achievement: { accent: '#5B21B6', bg: 'rgba(91,33,182,0.08)', border: 'rgba(91,33,182,0.25)' },
-  Birthday:    { accent: '#9D174D', bg: 'rgba(157,23,77,0.08)',  border: 'rgba(157,23,77,0.25)' },
-};
-const getCatStyle = (cat) => CAT_STYLE[cat] || { accent: '#5C3A1E', bg: 'rgba(92,58,30,0.08)', border: 'rgba(92,58,30,0.22)' };
-
 const getCategoryBg = (category) => {
   switch (category) {
     case 'Event':       return '#2563EB';
@@ -47,18 +37,6 @@ const getCategoryBg = (category) => {
     case 'Birthday':    return '#DB2777';
     default:            return '#6B7280';
   }
-};
-
-const formatDate = (date) => {
-  if (!date) return '';
-  const d = date?.toDate ? date.toDate() : new Date(date);
-  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-};
-
-const formatDateShort = (date) => {
-  if (!date) return '';
-  const d = date?.toDate ? date.toDate() : new Date(date);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 function getImages(r) {
@@ -197,11 +175,9 @@ function ServiceCard({ icon, number, title, description, tag, accent, accentBg, 
         height: '100%', display: 'flex', flexDirection: 'column',
       }}
     >
-      {/* large bg number */}
       <div style={{ position:'absolute', top:4, right:12, fontFamily:"'Barlow Condensed',sans-serif", fontSize:'5.5rem', fontWeight:900, color:hovered ? `${accent}16` : 'rgba(0,0,0,.04)', lineHeight:1, userSelect:'none', pointerEvents:'none', letterSpacing:'-0.03em', transition:'color .3s, transform .3s', transform: hovered ? 'translateY(-6px)' : 'none' }}>
         {number}
       </div>
-      {/* icon */}
       <div style={{ width:46, height:46, borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', background:hovered ? accent : accentBg, border:`1.5px solid ${hovered ? 'transparent' : accentBorder}`, color:hovered ? 'white' : accent, marginBottom:18, transition:'all .35s cubic-bezier(.34,1.56,.64,1)', transform:hovered ? 'scale(1.14) rotate(-6deg)' : 'scale(1) rotate(0)', boxShadow:hovered ? `0 10px 26px ${accent}44` : 'none', flexShrink:0 }}>
         {icon}
       </div>
@@ -214,7 +190,6 @@ function ServiceCard({ icon, number, title, description, tag, accent, accentBg, 
       <span style={{ display:'inline-flex', alignItems:'center', fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'.13em', padding:'6px 14px', borderRadius:5, background:hovered ? accent : accentBg, border:`1.5px solid ${hovered ? 'transparent' : accentBorder}`, color:hovered ? 'white' : accent, fontFamily:"'Barlow Condensed',sans-serif", transition:'all .28s', alignSelf:'flex-start', boxShadow:hovered ? `0 5px 14px ${accent}44` : 'none' }}>
         {tag}
       </span>
-      {/* bottom accent bar */}
       <div style={{ position:'absolute', bottom:0, left:0, right:0, height:3, background:`linear-gradient(90deg,${accent},${accent}88,transparent)`, transform:hovered ? 'scaleX(1)' : 'scaleX(0)', transformOrigin:'left', transition:'transform .38s ease' }} />
     </div>
   );
@@ -240,20 +215,238 @@ function SlideshowPortal({ open, onClose, reports, jumpToReportRef }) {
   );
 }
 
+// ─── Weekly Updates Slideshow — full-bleed, no chevrons, white thumbnail strip ─
+function WeeklyUpdatesSlideshow({ reports, onOpenSlideshow }) {
+  const [currentIdx,    setCurrentIdx]    = useState(0);
+  const [prevIdx,       setPrevIdx]       = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const autoRef  = useRef(null);
+  const stripRef = useRef(null);
+  const THUMB_H  = 88;
+
+  const allSlides = reports.flatMap(r =>
+    getImages(r).map((img) => ({ img, report: r }))
+  );
+  const total = allSlides.length;
+
+  const goTo = useCallback((idx) => {
+    if (idx === currentIdx || transitioning) return;
+    setTransitioning(true);
+    setPrevIdx(currentIdx);
+    setCurrentIdx(idx);
+    setTimeout(() => { setPrevIdx(null); setTransitioning(false); }, 600);
+  }, [currentIdx, transitioning]);
+
+  const next = useCallback(() => goTo((currentIdx + 1) % total), [goTo, currentIdx, total]);
+
+  const resetAuto = useCallback(() => {
+    clearInterval(autoRef.current);
+    if (total < 2) return;
+    autoRef.current = setInterval(next, 10000);
+  }, [next, total]);
+
+  useEffect(() => { resetAuto(); return () => clearInterval(autoRef.current); }, [resetAuto]);
+
+  useEffect(() => {
+    if (!stripRef.current || total === 0) return;
+    const container = stripRef.current;
+    const target = currentIdx * (THUMB_H + 8) - (container.clientHeight / 2) + THUMB_H / 2;
+    container.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+  }, [currentIdx, total]);
+
+  if (total === 0) return null;
+
+  const current  = allSlides[currentIdx];
+  const catColor = getCategoryBg(current.report.category);
+  const progress = ((currentIdx + 1) / total) * 100;
+  const DOT_LIMIT = 14;
+
+  return (
+    <div style={{
+      display: 'flex',
+      height: 560,
+      overflow: 'hidden',
+      background: '#000',
+    }}>
+
+      {/* ── LEFT: full-bleed image panel ── */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+
+        {/* Outgoing image */}
+        {prevIdx !== null && (
+          <img
+            src={allSlides[prevIdx].img}
+            alt=""
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'fit',         /* ✅ fixed: was 'fit' */
+              objectPosition: 'center',
+              zIndex: 1,
+              animation: 'wus-fadeOut 0.6s ease forwards',
+              imageRendering: 'auto',     /* ✅ HD: browser chooses best quality */
+            }}
+          />
+        )}
+
+        {/* Current image */}
+        <img
+          key={currentIdx}
+          src={current.img}
+          alt={current.report.title}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'fit',           /* ✅ fixed: was invalid 'fit' */
+            objectPosition: 'center',
+            zIndex: 2,
+            animation: 'wus-fadeIn 0.6s ease forwards',
+            imageRendering: 'auto',       /* ✅ HD rendering */
+          }}
+        />
+
+     
+        {/* Bottom overlay: category + title + dot nav + counter */}
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'32px 36px 28px', zIndex:4 }}>
+
+          {/* Category badge */}
+          <div style={{ marginBottom:10 }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:4, background:catColor, color:'white', fontFamily:"'Barlow Condensed',sans-serif", fontWeight:800, fontSize:11, letterSpacing:'.18em', textTransform:'uppercase' }}>
+              <Tag size={10} /> {current.report.category}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'clamp(1.6rem,3vw,2.4rem)', letterSpacing:'.04em', lineHeight:1.05, color:'white', marginBottom:16, textShadow:'0 2px 20px rgba(0,0,0,0.8)', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+            {current.report.title}
+          </h3>
+
+          {/* Controls row */}
+          <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+            {/* Pill dots */}
+            <div style={{ display:'flex', gap:5, alignItems:'center' }}>
+              {allSlides.slice(0, DOT_LIMIT).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { goTo(i); resetAuto(); }}
+                  style={{
+                    width: i === currentIdx ? 22 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    background: i === currentIdx ? 'white' : 'rgba(255,255,255,0.32)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    transition: 'all 0.3s ease',
+                    flexShrink: 0,
+                  }}
+                />
+              ))}
+              {total > DOT_LIMIT && (
+                <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:10, color:'rgba(255,255,255,0.38)', fontWeight:700, marginLeft:2 }}>+{total - DOT_LIMIT}</span>
+              )}
+            </div>
+
+            {/* Counter */}
+            <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.42)', letterSpacing:'.1em', marginLeft:4 }}>
+              {currentIdx + 1} / {total}
+            </span>
+          </div>
+        </div>
+
+        {/* Progress bar pinned to bottom */}
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:3, background:'rgba(255,255,255,0.1)', zIndex:5 }}>
+          <div style={{ height:'100%', background:`linear-gradient(90deg, ${catColor}, rgba(255,255,255,0.7))`, width:`${progress}%`, transition:'width 0.4s ease', borderRadius:'0 2px 2px 0' }}/>
+        </div>
+      </div>
+
+      {/* ── RIGHT: white thumbnail strip ── */}
+      <div
+        className="wus-strip-col"
+        style={{ width:116, flexShrink:0, background:'#FFFFFF', borderLeft:'1px solid #E5E7EB', display:'flex', flexDirection:'column', overflow:'hidden' }}
+      >
+        {/* Header */}
+        <div style={{ padding:'12px 8px 10px', flexShrink:0, borderBottom:'1px solid #F0F0F0', background:'#FAFAFA' }}>
+          <p style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:9, fontWeight:800, letterSpacing:'.2em', textTransform:'uppercase', color:'#9CA3AF', textAlign:'center', margin:0 }}>
+            Photos
+          </p>
+        </div>
+
+        {/* Scrollable thumbnails */}
+        <div
+          ref={stripRef}
+          className="wus-strip"
+          style={{ flex:1, overflowY:'auto', overflowX:'hidden', padding:'8px 6px', display:'flex', flexDirection:'column', gap:8, scrollbarWidth:'none' }}
+        >
+          {allSlides.map((slide, i) => {
+            const isActive    = i === currentIdx;
+            const repCatColor = getCategoryBg(slide.report.category);
+            return (
+              <button
+                key={i}
+                onClick={() => { goTo(i); resetAuto(); }}
+                style={{
+                  width: '100%',
+                  height: THUMB_H,
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  border: isActive ? `2px solid ${repCatColor}` : '2px solid #E5E7EB',
+                  padding: 0,
+                  cursor: 'pointer',
+                  position: 'relative',
+                  flexShrink: 0,
+                  transition: 'all 0.22s',
+                  transform: isActive ? 'scale(1.03)' : 'scale(1)',
+                  boxShadow: isActive
+                    ? `0 0 0 2px ${repCatColor}33, 0 4px 12px rgba(0,0,0,0.1)`
+                    : '0 1px 4px rgba(0,0,0,0.05)',
+                  background: '#F3F4F6',
+                }}
+              >
+                <img
+                  src={slide.img}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'fit',       /* ✅ HD thumbnail fill */
+                    objectPosition: 'center',
+                    display: 'block',
+                    opacity: isActive ? 1 : 0.6,
+                    transition: 'opacity 0.22s',
+                  }}
+                />
+                {/* Active left stripe */}
+                {isActive && (
+                  <div style={{ position:'absolute', left:0, top:0, bottom:0, width:3, background:repCatColor, borderRadius:'0 2px 2px 0' }}/>
+                )}
+                {/* Dim overlay for inactive */}
+                {!isActive && (
+                  <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.15)' }}/>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── HomePage ─────────────────────────────────────────────────────────────────
 export function HomePage() {
-  const [allReports,    setAllReports]    = useState([]);
-  const [bdayOfficers,  setBdayOfficers]  = useState([]);
-  const [slideshowOpen, setSlideshowOpen] = useState(false);
-  const [featuredIdx,   setFeaturedIdx]   = useState(0);
-  const [currentPage,   setCurrentPage]   = useState(0);
+  const [allReports,      setAllReports]      = useState([]);
+  const [bdayOfficers,    setBdayOfficers]    = useState([]);
+  const [slideshowOpen,   setSlideshowOpen]   = useState(false);
   const [visibleSections, setVisibleSections] = useState({});
-  const sectionRefs   = useRef({});
+  const sectionRefs     = useRef({});
   const jumpToReportRef = useRef(null);
   const autoRef         = useRef(null);
-  const reportsPerPage  = 6;
 
-  // ── Scroll reveal setup ──
   useEffect(() => {
     const observers = {};
     Object.entries(sectionRefs.current).forEach(([key, el]) => {
@@ -270,38 +463,12 @@ export function HomePage() {
 
   useEffect(() => {
     getWeeklyReports().then(data => {
-      const now    = new Date();
-      const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-      const toDate = (d) => d?.toDate ? d.toDate() : new Date(d);
-      const recent = data.filter(r => toDate(r.date) >= cutoff);
-      const sorted = recent.sort((a, b) => toDate(b.date) - toDate(a.date));
-      setAllReports(sorted);
+      setAllReports(data.sort((a, b) => String(b.id).localeCompare(String(a.id))));
     }).catch(err => console.error('Failed to load reports:', err));
-
     getOfficers().then(data => {
       setBdayOfficers(data.filter(o => isBday(o.birthdate)));
     }).catch(err => console.error('Failed to load officers:', err));
   }, []);
-
-  const bdaySlides     = bdayOfficers.map(o => ({ type: 'bday',   id: `bday-${o.id}`,  officer: o }));
-  const reportSlides   = allReports.map(r   => ({ type: 'report', id: r.id,             report: r  }));
-  const featuredSlides = [...bdaySlides, ...reportSlides];
-  const featured       = featuredSlides[featuredIdx] ?? null;
-  const isBdaySlide    = featured?.type === 'bday';
-
-  const startAuto = useCallback(() => {
-    clearInterval(autoRef.current);
-    if (featuredSlides.length < 2) return;
-    autoRef.current = setInterval(() => {
-      setFeaturedIdx(p => (p + 1) % featuredSlides.length);
-    }, 60000);
-  }, [featuredSlides.length]);
-
-  useEffect(() => { startAuto(); return () => clearInterval(autoRef.current); }, [startAuto]);
-
-  const goFeatured  = (i) => { setFeaturedIdx(i); startAuto(); };
-  const prevFeatured = () => goFeatured((featuredIdx - 1 + featuredSlides.length) % featuredSlides.length);
-  const nextFeatured = () => goFeatured((featuredIdx + 1) % featuredSlides.length);
 
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') setSlideshowOpen(false); };
@@ -309,149 +476,55 @@ export function HomePage() {
     return () => window.removeEventListener('keydown', fn);
   }, [slideshowOpen]);
 
-  const totalPages   = Math.ceil(allReports.length / reportsPerPage);
-  const currentCards = allReports.slice(currentPage * reportsPerPage, (currentPage + 1) * reportsPerPage);
-
-  const handlePrevPage = () => setCurrentPage(p => Math.max(0, p - 1));
-  const handleNextPage = () => setCurrentPage(p => Math.min(totalPages - 1, p + 1));
-
-  const handleCardClick = useCallback(reportId => {
-    setSlideshowOpen(true);
-    setTimeout(() => { if (jumpToReportRef.current) jumpToReportRef.current(reportId); }, 350);
-  }, []);
+  const handleOpenSlideshow = useCallback(() => setSlideshowOpen(true), []);
+  const bdaySlides = bdayOfficers.map(o => ({ type:'bday', id:`bday-${o.id}`, officer:o }));
 
   return (
-    <div id="hp-root" style={{ fontFamily: "'Barlow',sans-serif", background: '#F7F4F1' }}>
+    <div id="hp-root" style={{ fontFamily:"'Barlow',sans-serif", background:'#F7F4F1' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800;1,900&display=swap');
-        #hp-root *, #hp-root *::before, #hp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap');
+        #hp-root *, #hp-root *::before, #hp-root *::after { box-sizing:border-box; margin:0; padding:0; }
 
-        /* ── Base animations ── */
-        @keyframes hp-fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes hm-bounce    { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
-        @keyframes hm-pulseDot  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
-        @keyframes bday-float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        @keyframes hp-gradFlow  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        @keyframes hp-shimmer   { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        @keyframes hp-orb       { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(14px,-10px) scale(1.04)} }
-        @keyframes hp-lineGrow  { from{transform:scaleX(0)} to{transform:scaleX(1)} }
-        @keyframes hp-scanline  { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+        @keyframes hp-fadeUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes hm-pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+        @keyframes bday-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        @keyframes hp-gradFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes hp-shimmer  { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes hp-orb      { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(14px,-10px) scale(1.04)} }
+        @keyframes wus-fadeIn  { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
+        @keyframes wus-fadeOut { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(0.97)} }
 
-        /* ── Hero text entrance ── */
-        #hp-root .hp-f1 { animation: hp-fadeUp .8s ease .05s both }
         #hp-root .hp-f2 { animation: hp-fadeUp .8s ease .15s both }
         #hp-root .hp-f3 { animation: hp-fadeUp .8s ease .28s both }
         #hp-root .hp-f4 { animation: hp-fadeUp .8s ease .42s both }
         #hp-root .hp-f5 { animation: hp-fadeUp .8s ease .56s both }
 
-        /* ── Scroll reveal ── */
-        #hp-root .hp-reveal       { opacity:0; transform:translateY(24px);  transition:opacity 0.78s cubic-bezier(.22,1,.36,1), transform 0.78s cubic-bezier(.22,1,.36,1); }
-        #hp-root .hp-reveal-left  { opacity:0; transform:translateX(-24px); transition:opacity 0.78s cubic-bezier(.22,1,.36,1), transform 0.78s cubic-bezier(.22,1,.36,1); }
-        #hp-root .hp-reveal-right { opacity:0; transform:translateX(24px);  transition:opacity 0.78s cubic-bezier(.22,1,.36,1), transform 0.78s cubic-bezier(.22,1,.36,1); }
-        #hp-root .hp-reveal-scale { opacity:0; transform:scale(0.93);       transition:opacity 0.78s cubic-bezier(.22,1,.36,1), transform 0.78s cubic-bezier(.22,1,.36,1); }
+        #hp-root .hp-reveal       { opacity:0; transform:translateY(24px);  transition:opacity .78s cubic-bezier(.22,1,.36,1), transform .78s cubic-bezier(.22,1,.36,1); }
+        #hp-root .hp-reveal-scale { opacity:0; transform:scale(0.97);       transition:opacity .78s cubic-bezier(.22,1,.36,1), transform .78s cubic-bezier(.22,1,.36,1); }
         #hp-root .hp-reveal.visible,
-        #hp-root .hp-reveal-left.visible,
-        #hp-root .hp-reveal-right.visible,
         #hp-root .hp-reveal-scale.visible { opacity:1; transform:none; }
         #hp-root .hp-d1 { transition-delay:0.05s !important; }
         #hp-root .hp-d2 { transition-delay:0.14s !important; }
         #hp-root .hp-d3 { transition-delay:0.23s !important; }
-        #hp-root .hp-d4 { transition-delay:0.32s !important; }
-        #hp-root .hp-d5 { transition-delay:0.41s !important; }
-        #hp-root .hp-d6 { transition-delay:0.50s !important; }
 
-        /* ── Report cards ── */
-        #hp-root .rpt-card {
-          transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease;
-          position: relative;
-        }
-        #hp-root .rpt-card::after {
-          content:''; position:absolute; bottom:0; left:0; right:0; height:0;
-          transition: height .32s cubic-bezier(.22,1,.36,1); border-radius:0 0 12px 12px;
-          pointer-events:none;
-        }
-        #hp-root .rpt-card:hover { transform: translateY(-6px); box-shadow: 0 18px 44px rgba(0,0,0,0.14) !important; }
-        #hp-root .rpt-card:hover::after { height:3px; background:linear-gradient(90deg,#C41E00,#E8340A,transparent); }
-        #hp-root .rpt-card:hover .rpt-img { transform: scale(1.07); }
-        #hp-root .rpt-img { transition: transform .5s ease; }
-        #hp-root .rpt-card:hover .rpt-card-num { opacity: 0.1 !important; transform:translateY(-8px); }
-        #hp-root .rpt-card-num { transition: opacity .3s, transform .3s; }
+        #hp-root .hp-stat-pill { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); border-radius:10px; padding:8px 14px; text-align:center; transition:all .25s; }
+        #hp-root .hp-stat-pill:hover { background:rgba(255,255,255,.2); transform:translateY(-3px); border-color:rgba(255,255,255,.35); box-shadow:0 10px 28px rgba(0,0,0,.22); }
 
-        /* ── Featured hero nav ── */
-        #hp-root .feat-nav {
-          position:absolute; top:50%; transform:translateY(-50%);
-          width:38px; height:38px; border-radius:50%;
-          background:rgba(255,255,255,0.13); border:1.5px solid rgba(255,255,255,0.28);
-          color:white; cursor:pointer; display:flex; align-items:center; justify-content:center;
-          backdrop-filter:blur(10px); transition:all .25s; z-index:15;
-        }
-        #hp-root .feat-nav:hover {
-          background:rgba(255,255,255,0.28); border-color:rgba(255,255,255,0.6);
-          transform:translateY(-50%) scale(1.1);
-        }
+        #hp-root .hp-feat-shimmer { position:absolute; inset:0; z-index:8; pointer-events:none; background:linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.05) 50%, transparent 62%); background-size:220% 100%; animation:hp-shimmer 4s ease infinite; }
 
-        /* ── Hero stat pills ── */
-        #hp-root .hp-stat-pill {
-          background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18);
-          backdropFilter:blur(14px); border-radius:10px; padding:8px 14px; text-align:center;
-          transition:all .25s cubic-bezier(.22,1,.36,1);
-        }
-        #hp-root .hp-stat-pill:hover {
-          background:rgba(255,255,255,.2); transform:translateY(-3px);
-          border-color:rgba(255,255,255,.35);
-          box-shadow:0 10px 28px rgba(0,0,0,.22);
-        }
+        /* Thumbnail strip scrollbar */
+        #hp-root .wus-strip::-webkit-scrollbar { display:none; }
 
-        /* ── Weekly updates section bg texture ── */
-        #hp-root .hp-updates-bg {
-          position:absolute; inset:0; opacity:0.025;
-          background-image:radial-gradient(circle, rgba(196,30,0,1) 1px, transparent 1px);
-          background-size:20px 20px; pointer-events:none;
-        }
-
-        /* ── CTA banner ── */
-        #hp-root .hp-cta-stat {
-          transition:background .22s, transform .22s; border-radius:6px; cursor:default;
-        }
+        #hp-root .hp-svc-col { transition:background .28s; }
+        #hp-root .hp-svc-col:hover { background:rgba(196,30,0,0.02); }
+        #hp-root .hp-cta-stat { transition:background .22s,transform .22s; border-radius:6px; cursor:default; }
         #hp-root .hp-cta-stat:hover { background:rgba(196,30,0,.06); transform:translateY(-2px); }
         #hp-root .hp-cta-stat-val { transition:transform .22s; display:block; }
         #hp-root .hp-cta-stat:hover .hp-cta-stat-val { transform:scale(1.1); }
 
-        /* ── Services grid ── */
-        #hp-root .hp-svc-col {
-          transition: background .28s;
-        }
-        #hp-root .hp-svc-col:hover { background:rgba(196,30,0,0.02); }
-
-        /* ── Featured hero shimmer ── */
-        #hp-root .hp-feat-shimmer {
-          position:absolute; inset:0; z-index:8; pointer-events:none;
-          background:linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.05) 50%, transparent 62%);
-          background-size:220% 100%; animation:hp-shimmer 4s ease infinite;
-        }
-
-        /* ── Pagination buttons ── */
-        #hp-root .hp-pg-btn {
-          width:36px; height:36px; border-radius:7px; background:white;
-          border:2px solid #DC2626; color:#DC2626;
-          display:flex; align-items:center; justify-content:center;
-          transition:all .22s cubic-bezier(.22,1,.36,1); cursor:pointer;
-        }
-        #hp-root .hp-pg-btn:not(:disabled):hover {
-          background:#DC2626; color:white; transform:scale(1.08);
-          box-shadow:0 5px 16px rgba(220,38,38,0.35);
-        }
-        #hp-root .hp-pg-btn:disabled { opacity:.3; cursor:default; }
-
-        @media (max-width: 900px) {
-          #hp-root .hp-cards-grid { grid-template-columns: repeat(2,1fr) !important; }
-          #hp-root .hp-svc-grid   { grid-template-columns: 1fr 1fr !important; }
-        }
-        @media (max-width: 600px) {
-          #hp-root .hp-cards-grid { grid-template-columns: 1fr !important; }
-          #hp-root .hp-svc-grid   { grid-template-columns: 1fr !important; }
-          #hp-root .hp-cta-inner  { flex-direction: column !important; }
-        }
+        @media (max-width:900px) { #hp-root .hp-svc-grid { grid-template-columns:1fr 1fr !important; } }
+        @media (max-width:600px) { #hp-root .hp-svc-grid { grid-template-columns:1fr !important; } #hp-root .hp-cta-inner { flex-direction:column !important; } }
+        @media (max-width:700px) { #hp-root .wus-strip-col { display:none !important; } }
       `}</style>
 
       <SlideshowPortal open={slideshowOpen} onClose={() => setSlideshowOpen(false)} reports={allReports} jumpToReportRef={jumpToReportRef} />
@@ -459,20 +532,13 @@ export function HomePage() {
       {/* ══════════════════════════════════════════════════ HERO */}
       <section style={{ position:'relative', minHeight:'100vh', display:'flex', flexDirection:'column', justifyContent:'flex-end', overflow:'hidden' }}>
         <img src={Fire} alt="BFP Station 1 Cogon" style={{ position:'absolute', inset:0, width:'100%', height:'85%', objectFit:'cover' }} />
-
-        {/* overlays */}
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top,rgba(5,2,1,.97) 0%,rgba(8,3,2,.74) 38%,rgba(0,0,0,.22) 100%)' }} />
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(110deg,rgba(5,2,1,.68) 0%,transparent 55%)' }} />
-        {/* left accent strip */}
         <div style={{ position:'absolute', top:0, left:0, width:3, height:'100%', background:'linear-gradient(to bottom,#b52000 0%,#e06020 58%,transparent 100%)', opacity:.95 }} />
-        {/* noise grain */}
-        <div style={{ position:'absolute', inset:0, opacity:0.03, backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize:'160px 160px', pointerEvents:'none' }} />
-        {/* animated glow orb top-right */}
         <div style={{ position:'absolute', top:'-15%', right:'-5%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(220,84,8,0.12) 0%, transparent 65%)', pointerEvents:'none', animation:'hp-orb 9s ease-in-out infinite' }} />
 
         <div style={{ position:'relative', zIndex:10, maxWidth:1280, margin:'0 auto', padding:'6rem 2rem 7rem', width:'100%' }}>
           <div style={{ maxWidth:640 }}>
-            {/* status badges */}
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24, flexWrap:'wrap' }}>
               <span style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 14px', borderRadius:999, background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.18)', backdropFilter:'blur(14px)', fontSize:11, fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', color:'white', fontFamily:"'Barlow Condensed',sans-serif" }}>
                 <span style={{ width:7, height:7, borderRadius:'50%', background:'#4ade80', animation:'hm-pulseDot 2.2s ease-in-out infinite', flexShrink:0, display:'inline-block' }} />
@@ -482,50 +548,37 @@ export function HomePage() {
                 <Shield size={11} /> BFP Station 1 · Cogon
               </span>
             </div>
-
             <h1 className="hp-f2" style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'clamp(6.8rem,7vw,5.6rem)', letterSpacing:'0.04em', lineHeight:0.88, color:'white', marginBottom:18 }}>
               COGON<br /><span style={{ color:'#E8622A' }}>FIRE STATION</span>
             </h1>
-
-            {/* District label — always visible over image */}
-            <div className="hp-f3" style={{ display:'inline-flex', alignItems:'center', gap:8, marginBottom:14, padding:'7px 16px', borderRadius:6, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.18)', boxShadow:'0 2px 16px rgba(0,0,0,0.4)' }}>
+            <div className="hp-f3" style={{ display:'inline-flex', alignItems:'center', gap:8, marginBottom:14, padding:'7px 16px', borderRadius:6, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.18)' }}>
               <Flame size={13} style={{ color:'#E8622A', flexShrink:0 }} />
-              <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:13, letterSpacing:'.22em', textTransform:'uppercase', color:'white', textShadow:'0 1px 6px rgba(0,0,0,0.8)' }}>
-                Cagayan de Oro Fire District
-              </span>
+              <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:13, letterSpacing:'.22em', textTransform:'uppercase', color:'white' }}>Cagayan de Oro Fire District</span>
             </div>
-
-            <p className="hp-f3" style={{ fontSize:'0.85rem', color:'rgba(255,255,255,.75)', lineHeight:1.75, marginBottom:4, fontWeight:500, fontFamily:"'Barlow',sans-serif", letterSpacing:'.01em', textShadow:'0 1px 10px rgba(0,0,0,0.9)' }}>
+            <p className="hp-f3" style={{ fontSize:'0.85rem', color:'rgba(255,255,255,.75)', lineHeight:1.75, marginBottom:4, fontWeight:500, fontFamily:"'Barlow',sans-serif", textShadow:'0 1px 10px rgba(0,0,0,0.9)' }}>
               Capt. Vicente Roa, Brgy. 33, Cagayan De Oro City
             </p>
             <p className="hp-f3" style={{ fontSize:'0.85rem', color:'rgba(255,255,255,.55)', lineHeight:1.85, maxWidth:560, marginBottom:30, fontFamily:"'Barlow',sans-serif", fontWeight:400, textShadow:'0 1px 12px rgba(0,0,0,0.9)' }}>
               Committed to preventing and suppressing destructive fires, safeguarding lives and properties, and promoting fire safety awareness throughout Cagayan de Oro City.
             </p>
-
             <div className="hp-f4" style={{ display:'flex', flexWrap:'wrap', gap:10, marginBottom:32 }}>
               <Link to="/about"
-                style={{ display:'inline-flex', alignItems:'center', gap:7, fontWeight:800, fontSize:12, padding:'11px 22px', borderRadius:10, background:'linear-gradient(135deg,#b52000,#e04810)', color:'white', textDecoration:'none', boxShadow:'0 7px 24px rgba(180,40,10,.5)', letterSpacing:'.04em', textTransform:'uppercase', fontFamily:"'Barlow Condensed',sans-serif", transition:'all .25s cubic-bezier(.22,1,.36,1)' }}
+                style={{ display:'inline-flex', alignItems:'center', gap:7, fontWeight:800, fontSize:12, padding:'11px 22px', borderRadius:10, background:'linear-gradient(135deg,#b52000,#e04810)', color:'white', textDecoration:'none', boxShadow:'0 7px 24px rgba(180,40,10,.5)', letterSpacing:'.04em', textTransform:'uppercase', fontFamily:"'Barlow Condensed',sans-serif", transition:'all .25s' }}
                 onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px) scale(1.03)'; e.currentTarget.style.boxShadow='0 14px 36px rgba(180,40,10,.65)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 7px 24px rgba(180,40,10,.5)'; }}
               >
                 About Us <ArrowRight size={13} />
               </Link>
               <a href="tel:911"
-                style={{ display:'inline-flex', alignItems:'center', gap:7, fontWeight:800, fontSize:12, padding:'11px 22px', borderRadius:10, background:'rgba(255,255,255,.08)', border:'1.5px solid rgba(255,255,255,.28)', color:'white', textDecoration:'none', backdropFilter:'blur(14px)', letterSpacing:'.04em', textTransform:'uppercase', fontFamily:"'Barlow Condensed',sans-serif", transition:'all .25s cubic-bezier(.22,1,.36,1)' }}
-                onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,.18)'; e.currentTarget.style.borderColor='rgba(255,255,255,.5)'; e.currentTarget.style.transform='translateY(-3px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.08)'; e.currentTarget.style.borderColor='rgba(255,255,255,.28)'; e.currentTarget.style.transform='none'; }}
+                style={{ display:'inline-flex', alignItems:'center', gap:7, fontWeight:800, fontSize:12, padding:'11px 22px', borderRadius:10, background:'rgba(255,255,255,.08)', border:'1.5px solid rgba(255,255,255,.28)', color:'white', textDecoration:'none', backdropFilter:'blur(14px)', letterSpacing:'.04em', textTransform:'uppercase', fontFamily:"'Barlow Condensed',sans-serif", transition:'all .25s' }}
+                onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,.18)'; e.currentTarget.style.transform='translateY(-3px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.08)'; e.currentTarget.style.transform='none'; }}
               >
                 <Phone size={13} /> Emergency: 911
               </a>
             </div>
-
             <div className="hp-f5" style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-              {[
-                { value:'24/7',  label:'Response'    },
-                { value:'911',   label:'Emergency'   },
-                { value:'35',    label:'Barangays'   },
-                { value:'1990',  label:'Established' },
-              ].map(({ value, label }) => (
+              {[{value:'24/7',label:'Response'},{value:'911',label:'Emergency'},{value:'35',label:'Barangays'},{value:'1990',label:'Established'}].map(({ value, label }) => (
                 <div key={label} className="hp-stat-pill">
                   <p style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'0.85rem', letterSpacing:'0.06em', color:'white', lineHeight:1 }}>{value}</p>
                   <p style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.14em', color:'rgba(255,255,255,.42)', marginTop:4, fontFamily:"'Barlow Condensed',sans-serif" }}>{label}</p>
@@ -535,26 +588,20 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* wave cut bottom */}
+        {/* Wave separator — white */}
         <div style={{ position:'absolute', bottom:-1, left:0, right:0, height:32, overflow:'hidden', pointerEvents:'none', zIndex:11 }}>
           <svg viewBox="0 0 1200 32" preserveAspectRatio="none" style={{ width:'100%', height:'100%' }}>
-            <path d="M0,32 L0,11 Q300,32 600,14 Q900,2 1200,14 L1200,32 Z" fill="#F9FAFB" />
+            <path d="M0,32 L0,11 Q300,32 600,14 Q900,2 1200,14 L1200,32 Z" fill="#FFFFFF" />
           </svg>
-        </div>
-
-        <div style={{ position:'absolute', bottom:22, left:'50%', animation:'hm-bounce 2.6s ease-in-out infinite' }}>
-          <ChevronDown size={20} style={{ color:'rgba(255,255,255,.28)' }} />
         </div>
       </section>
 
       {/* ══════════════════════════════════════ WEEKLY UPDATES */}
-      <section ref={setRef('updates')} style={{ background:'#F9FAFB', borderTop:'1px solid #E5E7EB', padding:'56px 0 68px', position:'relative', overflow:'hidden' }}>
-        {/* subtle dot grid */}
-        <div className="hp-updates-bg" />
+      <section ref={setRef('updates')} style={{ background:'#FFFFFF', borderTop:'1px solid #E5E7EB', paddingTop:56, position:'relative', overflow:'hidden' }}>
 
-        <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 2rem', position:'relative' }}>
+        {/* Padded heading block */}
+        <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 2rem' }}>
 
-          {/* Section heading */}
           <div className={`hp-reveal ${visibleSections['updates'] ? 'visible' : ''}`} style={{ textAlign:'center', marginBottom:40 }}>
             <div style={{ display:'inline-flex', alignItems:'center', gap:12, fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'.2em', color:D.red, marginBottom:14, fontFamily:"'Barlow Condensed',sans-serif" }}>
               <span style={{ display:'inline-block', width:28, height:2, background:`linear-gradient(90deg,transparent,${D.red})`, borderRadius:1 }} />
@@ -562,195 +609,70 @@ export function HomePage() {
               <span style={{ display:'inline-block', width:28, height:2, background:`linear-gradient(90deg,${D.red},transparent)`, borderRadius:1 }} />
             </div>
             <h2 style={{ lineHeight:1.05, marginBottom:14 }}>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,4.5vw,3.6rem)', color:'#1A1210', display:'inline', letterSpacing:'.04em' }}>Weekly </span>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,4.5vw,3.6rem)', color:D.red, display:'inline', letterSpacing:'.04em' }}>Updates</span>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,4.5vw,3.6rem)', color:'#1A1210', letterSpacing:'.04em' }}>Weekly </span>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,4.5vw,3.6rem)', color:D.red, letterSpacing:'.04em' }}>Updates</span>
             </h2>
             <p style={{ fontSize:15, color:'#6B6258', fontFamily:"'Barlow',sans-serif", fontWeight:400, lineHeight:1.75, maxWidth:440, margin:'0 auto' }}>
               Station bulletins, training highlights, events, and team milestones
             </p>
           </div>
 
-          {featuredSlides.length > 0 ? (
-            <>
-              {/* ── FEATURED HERO ── */}
-              <div className={`hp-reveal-scale ${visibleSections['updates'] ? 'visible' : ''} hp-d2`}
-                style={{ position:'relative', borderRadius:18, overflow:'hidden', boxShadow:'0 20px 56px rgba(0,0,0,0.18)', background:'#111827', marginBottom:36 }}>
-
-                <div style={{ position:'relative', height:460, overflow:'hidden' }}>
-                  {/* shimmer pass */}
-                  <div className="hp-feat-shimmer" />
-
-                  {isBdaySlide && <BirthdayFeaturedSlide key={featured.id} officer={featured.officer} />}
-
-                  {!isBdaySlide && featured?.report && (() => {
-                    const imgs = getImages(featured.report);
-                    return (
-                      <>
-                        {imgs[0] ? (
-                          <img key={featured.id} src={imgs[0]} alt={featured.report.title}
-                            style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'opacity .4s ease' }} />
-                        ) : (
-                          <div style={{ width:'100%', height:'100%', background:'linear-gradient(135deg,#1f2937,#374151)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            <Flame size={52} style={{ color:'rgba(255,255,255,0.2)' }} />
-                          </div>
-                        )}
-                        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 45%, transparent 100%)' }} />
-                        <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'28px 36px', color:'white' }}>
-                          <div style={{ maxWidth:680 }}>
-                            <div style={{ marginBottom:12 }}>
-                              <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 13px', borderRadius:5, background:getCategoryBg(featured.report.category), color:'white', fontFamily:"'Barlow Condensed',sans-serif", fontWeight:800, fontSize:11, letterSpacing:'.18em', textTransform:'uppercase' }}>
-                                <Tag size={11} /> {featured.report.category}
-                              </span>
-                            </div>
-                            <h3 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'clamp(1.8rem,3.6vw,2.6rem)', letterSpacing:'.04em', lineHeight:1.0, marginBottom:10, textShadow:'0 2px 20px rgba(0,0,0,0.8)', color:'white' }}>
-                              {featured.report.title}
-                            </h3>
-                            <div style={{ display:'flex', alignItems:'center', gap:7, color:'rgba(255,255,255,0.75)' }}>
-                              <Calendar size={13} />
-                              <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:13, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase' }}>
-                                {formatDate(featured.report.date)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                  {featuredSlides.length > 1 && (
-                    <>
-                      <button className="feat-nav" onClick={prevFeatured} style={{ left:14 }}><ChevronLeft size={17} /></button>
-                      <button className="feat-nav" onClick={nextFeatured} style={{ right:14 }}><ChevronRight size={17} /></button>
-                    </>
-                  )}
-
-                  {/* dots */}
-                  <div style={{ position:'absolute', bottom:18, right:26, display:'flex', gap:5, zIndex:15 }}>
-                    {featuredSlides.map((s, idx) => (
-                      <button key={s.id} type="button" onClick={() => goFeatured(idx)}
-                        style={{ height:7, width:idx===featuredIdx ? 22:7, borderRadius:999, border:'none', padding:0, cursor:'pointer', background:idx===featuredIdx ? (s.type==='bday' ? '#F9A8D4' : 'white') : 'rgba(255,255,255,0.4)', transition:'all .28s' }} />
-                    ))}
-                  </div>
-
-                  {isBdaySlide && (
-                    <div style={{ position:'absolute', top:16, left:20, zIndex:15, display:'flex', alignItems:'center', gap:7 }}>
-                      <div style={{ width:7, height:7, borderRadius:'50%', background:'#F9A8D4', boxShadow:'0 0 8px #F472B6', animation:'hm-pulseDot 2s ease-in-out infinite' }} />
-                      <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:10, fontWeight:800, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,0.8)' }}>Today's Celebrant</span>
-                    </div>
-                  )}
+          {/* Birthday card */}
+          {bdaySlides.length > 0 && (
+            <div className={`hp-reveal-scale ${visibleSections['updates'] ? 'visible' : ''} hp-d1`}
+              style={{ position:'relative', borderRadius:14, overflow:'hidden', boxShadow:'0 20px 56px rgba(0,0,0,0.18)', background:'#111827', marginBottom:32 }}>
+              <div style={{ position:'relative', height:380, overflow:'hidden' }}>
+                <div className="hp-feat-shimmer" />
+                <BirthdayFeaturedSlide key={bdaySlides[0].id} officer={bdaySlides[0].officer} />
+                <div style={{ position:'absolute', top:16, left:20, zIndex:15, display:'flex', alignItems:'center', gap:7 }}>
+                  <div style={{ width:7, height:7, borderRadius:'50%', background:'#F9A8D4', boxShadow:'0 0 8px #F472B6', animation:'hm-pulseDot 2s ease-in-out infinite' }} />
+                  <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:10, fontWeight:800, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,0.8)' }}>Today's Celebrant</span>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* ── GRID HEADER + CARDS ── */}
-              {allReports.length > 0 && (
-                <>
-                  <div className={`hp-reveal ${visibleSections['updates'] ? 'visible' : ''} hp-d3`} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
-                    <div>
-                      <h3 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'clamp(2rem,2.4vw,2.2rem)', letterSpacing:'.04em', color:'#1A1210', lineHeight:1, marginBottom:4 }}>
-                        This Week's <span style={{ color:D.red }}>Reports</span>
-                      </h3>
-                      <p style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:12, fontWeight:700, letterSpacing:'.12em', textTransform:'uppercase', color:D.lo }}>
-                        All {allReports.length} reports
-                      </p>
-                    </div>
-                    {totalPages > 1 && (
-                      <div style={{ display:'flex', gap:7 }}>
-                        <button type="button" className="hp-pg-btn" onClick={handlePrevPage} disabled={currentPage === 0}>
-                          <ChevronLeft size={17} />
-                        </button>
-                        <button type="button" className="hp-pg-btn" onClick={handleNextPage} disabled={currentPage === totalPages - 1}>
-                          <ChevronRight size={17} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ── 3-COL REPORT CARDS ── */}
-                  <div className="hp-cards-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:18, marginBottom:18 }}>
-                    {currentCards.map((report, cardIdx) => {
-                      const images = getImages(report);
-                      const catColor = getCategoryBg(report.category);
-                      return (
-                        <div key={report.id} className={`rpt-card hp-reveal ${visibleSections['updates'] ? 'visible' : ''} hp-d${Math.min(cardIdx + 1, 6)}`}
-                          style={{ background:'white', borderRadius:12, overflow:'hidden', boxShadow:'0 2px 10px rgba(0,0,0,0.07)', cursor:'pointer', display:'flex', flexDirection:'column' }}
-                          onClick={() => handleCardClick(report.id)}
-                        >
-                          {/* card number watermark */}
-                          <div className="rpt-card-num" style={{ position:'absolute', top:-4, right:8, fontFamily:"'Barlow Condensed',sans-serif", fontSize:'5rem', fontWeight:900, color:'rgba(0,0,0,0.03)', lineHeight:1, userSelect:'none', pointerEvents:'none', letterSpacing:'-0.03em', zIndex:1 }}>
-                            {String(currentPage * reportsPerPage + cardIdx + 1).padStart(2, '0')}
-                          </div>
-
-                          {/* image */}
-                          <div style={{ position:'relative', height:175, overflow:'hidden', background:'#F3F4F6', flexShrink:0 }}>
-                            {images[0] ? (
-                              <img src={images[0]} alt={report.title} className="rpt-img" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-                            ) : (
-                              <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                                <Flame size={32} style={{ color:'#D1D5DB' }} />
-                              </div>
-                            )}
-                            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, transparent 100%)', pointerEvents:'none' }} />
-                            <div style={{ position:'absolute', top:10, left:10 }}>
-                              <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:4, background:catColor, color:'white', fontFamily:"'Barlow Condensed',sans-serif", fontWeight:800, fontSize:10, letterSpacing:'.18em', textTransform:'uppercase', boxShadow:'0 2px 7px rgba(0,0,0,0.25)' }}>
-                                <Tag size={9} /> {report.category}
-                              </span>
-                            </div>
-                            {images.length > 1 && (
-                              <div style={{ position:'absolute', top:10, right:10 }}>
-                                <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'4px 8px', borderRadius:4, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(6px)', color:'white', fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700, fontSize:10, letterSpacing:'.08em' }}>
-                                  <ImageIcon size={9} /> {images.length}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* body */}
-                          <div style={{ padding:'14px 16px 16px', flex:1, display:'flex', flexDirection:'column', gap:6, position:'relative', zIndex:2 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:6, color:D.red }}>
-                              <Calendar size={11} />
-                              <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:800, fontSize:11, letterSpacing:'.14em', textTransform:'uppercase' }}>
-                                {formatDateShort(report.date)}
-                              </span>
-                            </div>
-                            <h3 style={{ fontFamily:"'Barlow',sans-serif", fontWeight:800, fontSize:16, color:'#1A1210', lineHeight:1.25, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
-                              {report.title}
-                            </h3>
-                            {/* colored bottom rule */}
-                            <div style={{ height:2, background:`linear-gradient(90deg,${catColor},${catColor}66,transparent)`, borderRadius:1, marginTop:4 }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {totalPages > 1 && (
-                    <div style={{ textAlign:'center' }}>
-                      <span style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700, fontSize:12, letterSpacing:'.14em', textTransform:'uppercase', color:D.lo }}>
-                        Page {currentPage + 1} of {totalPages}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          ) : (
-            <div style={{ padding:'60px 24px', textAlign:'center', borderRadius:16, border:'1.5px dashed #D1D5DB', background:'white' }}>
-              <Flame size={34} style={{ color:'#D1D5DB', marginBottom:14 }} />
-              <p style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'1.8rem', letterSpacing:'.06em', color:'#9CA3AF' }}>No Recent Reports</p>
-              <p style={{ fontFamily:"'Barlow',sans-serif", fontSize:14, color:'#9CA3AF', marginTop:5 }}>No posts from the last 7 days. Older reports are available in the <Link to="/weekly-reports" style={{ color:D.red, fontWeight:700, textDecoration:'none' }}>Weekly Reports</Link> archive.</p>
+          {allReports.length > 0 && (
+            <div className={`hp-reveal ${visibleSections['updates'] ? 'visible' : ''} hp-d2`}
+              style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
+              <div></div>
             </div>
           )}
         </div>
+
+        {/* ── Full-bleed slideshow ── */}
+        {allReports.length > 0 ? (
+          <div
+            className={`hp-reveal-scale ${visibleSections['updates'] ? 'visible' : ''} hp-d3`}
+            style={{
+              margin: 0,
+              padding: 0,
+              borderTop: '1px solid #E5E7EB',
+              borderBottom: '1px solid #E5E7EB',
+              overflow: 'hidden',
+            }}
+          >
+            <WeeklyUpdatesSlideshow reports={allReports} onOpenSlideshow={handleOpenSlideshow} />
+          </div>
+        ) : (
+          <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 2rem' }}>
+            <div style={{ padding:'60px 24px', textAlign:'center', borderRadius:12, border:'1.5px dashed #D1D5DB', background:'#FAFAFA' }}>
+              <Flame size={34} style={{ color:'#D1D5DB', marginBottom:14 }} />
+              <p style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'1.8rem', letterSpacing:'.06em', color:'#9CA3AF' }}>No Recent Reports</p>
+              <p style={{ fontFamily:"'Barlow',sans-serif", fontSize:14, color:'#9CA3AF', marginTop:5 }}>No reports yet. Check back soon.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom spacer */}
+        <div style={{ height:56, background:'#FFFFFF' }} />
       </section>
 
       {/* ══════════════════════════════════════════════ CORE SERVICES */}
       <section ref={setRef('services')} style={{ background:'white', borderTop:'1px solid #EAE4DC', padding:'64px 0 72px', position:'relative', overflow:'hidden' }}>
-        {/* large watermark */}
         <div style={{ position:'absolute', right:'-2%', top:'50%', transform:'translateY(-50%)', fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(6rem,14vw,12rem)', lineHeight:1, color:'rgba(196,30,0,0.025)', pointerEvents:'none', userSelect:'none', whiteSpace:'nowrap', letterSpacing:'.04em' }}>FIRE</div>
 
         <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 2rem', position:'relative' }}>
-
-          {/* heading */}
           <div className={`hp-reveal ${visibleSections['services'] ? 'visible' : ''}`} style={{ textAlign:'center', marginBottom:44 }}>
             <div style={{ display:'inline-flex', alignItems:'center', gap:12, fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'.2em', color:D.red, marginBottom:14, fontFamily:"'Barlow Condensed',sans-serif" }}>
               <span style={{ display:'inline-block', width:28, height:2, background:`linear-gradient(90deg,transparent,${D.red})`, borderRadius:1 }} />
@@ -758,15 +680,14 @@ export function HomePage() {
               <span style={{ display:'inline-block', width:28, height:2, background:`linear-gradient(90deg,${D.red},transparent)`, borderRadius:1 }} />
             </div>
             <h2 style={{ lineHeight:1.05, marginBottom:14 }}>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,3.8vw,3.2rem)', color:'#1A1210', display:'inline', letterSpacing:'.04em' }}>Our Core </span>
-              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,3.8vw,3.2rem)', color:D.red, display:'inline', letterSpacing:'.04em' }}>Services</span>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,3.8vw,3.2rem)', color:'#1A1210', letterSpacing:'.04em' }}>Our Core </span>
+              <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,3.8vw,3.2rem)', color:D.red, letterSpacing:'.04em' }}>Services</span>
             </h2>
             <p style={{ fontSize:15, color:'#6B6258', fontFamily:"'Barlow',sans-serif", fontWeight:400, lineHeight:1.75, maxWidth:440, margin:'0 auto' }}>
               BFP Station 1 — Cogon serves the community with trained personnel, modern equipment, and unwavering commitment to public safety.
             </p>
           </div>
 
-          {/* services grid */}
           <div className={`hp-svc-grid hp-reveal-scale ${visibleSections['services'] ? 'visible' : ''} hp-d2`} style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:0, border:'1.5px solid #E4DDD4', borderRadius:12, overflow:'hidden', marginBottom:40, boxShadow:'0 4px 30px rgba(0,0,0,.07)' }}>
             <div className="hp-svc-col" style={{ borderRight:'1.5px solid #E4DDD4' }}>
               <ServiceCard icon={<Flame size={20} />} number="01" title="Fire Prevention & Inspection" description="Systematic fire safety inspections of residential, commercial, and industrial establishments to identify and eliminate hazards before they escalate." tag="Prevention First" accent="#C41E00" accentBg="rgba(196,30,0,.07)" accentBorder="rgba(196,30,0,.22)" />
@@ -779,34 +700,18 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Bottom CTA banner */}
           <div className={`hp-reveal ${visibleSections['services'] ? 'visible' : ''} hp-d3`} style={{ borderRadius:16, overflow:'hidden', background:'linear-gradient(135deg,#FDF8F3,#F5EDE3)', border:`1.5px solid ${D.br}`, position:'relative', boxShadow:'0 6px 32px rgba(0,0,0,.07)' }}>
-            {/* animated top bar */}
             <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background:`linear-gradient(90deg,${D.redDk},${D.red},${D.ora},${D.amb},${D.red},${D.redDk})`, backgroundSize:'200% 100%', animation:'hp-gradFlow 4s linear infinite' }} />
-            {/* dot pattern */}
-            <div style={{ position:'absolute', inset:0, pointerEvents:'none', opacity:0.022, backgroundImage:`radial-gradient(circle, ${D.red} 1px, transparent 1px)`, backgroundSize:'16px 16px' }} />
-            {/* bg watermark */}
             <div style={{ position:'absolute', right:-8, top:'50%', transform:'translateY(-50%)', fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(3.5rem,10vw,8rem)', lineHeight:1, color:'rgba(100,60,20,.04)', pointerEvents:'none', userSelect:'none', whiteSpace:'nowrap', letterSpacing:'.04em' }}>BFP COGON</div>
-            {/* circle decors */}
-            <div style={{ position:'absolute', left:-50, top:-50, width:200, height:200, borderRadius:'50%', border:'36px solid rgba(196,30,0,0.04)', pointerEvents:'none' }} />
-
             <div className="hp-cta-inner" style={{ position:'relative', zIndex:1, padding:'28px 36px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:24 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:18, flex:1, minWidth:200 }}>
-                <div>
-                  <p style={{ fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'.16em', color:D.red, marginBottom:5, fontFamily:"'Barlow Condensed',sans-serif" }}>Bureau of Fire Protection</p>
-                  <h3 style={{ fontFamily:"'Poppins',Georgia,serif", fontWeight:800, fontSize:'clamp(0.95rem,1.6vw,1.25rem)', color:D.hi, lineHeight:1.2, marginBottom:5 }}>Lingkod Bayan, Ipaglaban ang Kaligtasan</h3>
-                  <p style={{ fontSize:12, color:D.lo, fontWeight:500, fontFamily:"'Barlow',sans-serif", letterSpacing:'.01em' }}>BFP Station 1 · Cogon · Cagayan de Oro City · Region X</p>
-                </div>
+              <div style={{ flex:1, minWidth:200 }}>
+                <p style={{ fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'.16em', color:D.red, marginBottom:5, fontFamily:"'Barlow Condensed',sans-serif" }}>Bureau of Fire Protection</p>
+                <h3 style={{ fontFamily:"'Poppins',Georgia,serif", fontWeight:800, fontSize:'clamp(0.95rem,1.6vw,1.25rem)', color:D.hi, lineHeight:1.2, marginBottom:5 }}>Lingkod Bayan, Ipaglaban ang Kaligtasan</h3>
+                <p style={{ fontSize:12, color:D.lo, fontWeight:500, fontFamily:"'Barlow',sans-serif" }}>BFP Station 1 · Cogon · Cagayan de Oro City · Region X</p>
               </div>
               <div style={{ display:'flex', alignItems:'stretch', borderLeft:`1.5px solid ${D.br}`, paddingLeft:24, flexShrink:0 }}>
-                {[
-                  { label:'Established', value:'1990'    },
-                  { label:'Coverage',    value:'35 Brgy.' },
-                  { label:'Response',    value:'24 / 7'  },
-                ].map(({ label, value }, i) => (
-                  <div key={label} className="hp-cta-stat"
-                    style={{ textAlign:'center', padding:'5px 20px', borderLeft:i>0 ? `1.5px solid ${D.br}`:'none' }}
-                  >
+                {[{label:'Established',value:'1990'},{label:'Coverage',value:'35 Brgy.'},{label:'Response',value:'24 / 7'}].map(({ label, value }, i) => (
+                  <div key={label} className="hp-cta-stat" style={{ textAlign:'center', padding:'5px 20px', borderLeft:i>0 ? `1.5px solid ${D.br}`:'none' }}>
                     <span className="hp-cta-stat-val" style={{ fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:'1.25rem', letterSpacing:'.03em', color:D.ora, lineHeight:1 }}>{value}</span>
                     <span style={{ fontSize:9, fontWeight:800, textTransform:'uppercase', letterSpacing:'.13em', color:D.lo, marginTop:5, display:'block', fontFamily:"'Barlow Condensed',sans-serif" }}>{label}</span>
                   </div>

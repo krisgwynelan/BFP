@@ -326,7 +326,7 @@ export function AboutPage() {
               }}>
                 {images.map((img, i) => (
                   <img key={i} src={img} alt={`BFP Station ${i+1}`} style={{
-                    position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
+                    position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'fit',
                     opacity:currentIndex===i ? 1:0, transition:'opacity 0.6s ease',
                   }} />
                 ))}
@@ -346,7 +346,6 @@ export function AboutPage() {
                     background:'rgba(0,0,0,0.5)', backdropFilter:'blur(14px)',
                     borderRadius:12, padding:'8px 14px', border:'1px solid rgba(255,255,255,0.1)',
                   }}>
-                    <Flame size={12} style={{ color:'#e67e22' }} />
                     <span style={{ fontSize:11, fontWeight:700, color:'white', letterSpacing:'0.06em' }}>BFP Station 1 · Cogon</span>
                   </div>
                   <div style={{ display:'flex', gap:6 }}>

@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Plus, Edit, Trash2, X, FileText, Calendar,
+  Edit, Trash2, X, FileText,
   ChevronLeft, ChevronRight, Image as ImageIcon,
-  UploadCloud, AlertTriangle, Archive, Radio,
+  UploadCloud, AlertTriangle, Archive,
 } from 'lucide-react';
 
 import { CATEGORY_OPTIONS } from '../../utils/types';
 import { getWeeklyReports, saveWeeklyReport, deleteWeeklyReport } from '../../utils/storage';
 import { toast } from 'sonner';
 
-// ─── Z-index layers ────────────────────────────────────────────────────────────
 const Z = {
   formBackdrop:   99990,
   formDialog:     99991,
@@ -18,15 +17,13 @@ const Z = {
   deleteDialog:   99993,
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function isActive(report) {
-  if (!report.date) return false;
+  if (!report.date) return true;
   const d = report.date?.toDate ? report.date.toDate() : new Date(report.date);
   const diff = new Date() - d;
   return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
 }
 
-// ─── Image compression ────────────────────────────────────────────────────────
 function compressImage(dataUrl, maxDim = 1200, quality = 0.82) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -49,7 +46,6 @@ async function compressAll(images) {
   return Promise.all(images.map(src => compressImage(src)));
 }
 
-// ─── Category styles ──────────────────────────────────────────────────────────
 const CATEGORY_STYLES = {
   Event:       { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border border-blue-200' },
   Training:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
@@ -59,19 +55,12 @@ const CATEGORY_STYLES = {
 const getCategoryStyle = (cat) =>
   CATEGORY_STYLES[cat] || { dot: 'bg-stone-400', badge: 'bg-stone-100 text-stone-600 border border-stone-200' };
 
-const fmtDate = (date) => {
-  if (!date) return '';
-  const d = date?.toDate ? date.toDate() : new Date(date);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
 function getImages(report) {
   if (Array.isArray(report.images) && report.images.length > 0) return report.images;
   if (report.coverImage) return [report.coverImage];
   return [];
 }
 
-// ─── Field / label styles ─────────────────────────────────────────────────────
 const FIELD = {
   width: '100%', background: '#fafaf9', border: '1.5px solid #e8ddd8', borderRadius: 10,
   padding: '11px 14px', fontSize: 13.5, color: '#1a1714', outline: 'none',
@@ -91,10 +80,8 @@ function Section({ label, children }) {
   );
 }
 
-// ─── Image uploader ───────────────────────────────────────────────────────────
 function ImageUploader({ images, onChange }) {
   const inputRef = useRef(null);
-
   const addFiles = (e) => {
     Array.from(e.target.files).forEach((file) => {
       const reader = new FileReader();
@@ -107,7 +94,6 @@ function ImageUploader({ images, onChange }) {
     });
     e.target.value = '';
   };
-
   const remove = (idx) => onChange((prev) => prev.filter((_, i) => i !== idx));
   const move = (from, to) => onChange((prev) => {
     const next = [...prev];
@@ -149,7 +135,6 @@ function ImageUploader({ images, onChange }) {
           ))}
         </div>
       )}
-
       <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 12px', cursor: 'pointer', borderRadius: 12, background: '#fdf9f8', border: '1.5px dashed #e8d8d3' }}>
         <UploadCloud size={22} style={{ color: '#c4b5b0' }} />
         <span style={{ fontSize: 12.5, fontWeight: 600, color: '#a8a29e' }}>
@@ -162,7 +147,6 @@ function ImageUploader({ images, onChange }) {
   );
 }
 
-// ─── Card image mini-slider ───────────────────────────────────────────────────
 function CardImages({ images }) {
   const [idx, setIdx] = useState(0);
   if (!images.length) return <div style={{ height: 220, background: '#f5f0ed', flexShrink: 0 }} />;
@@ -183,12 +167,6 @@ function CardImages({ images }) {
           <span style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 7, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: 3 }}>
             <ImageIcon size={9} /> {idx + 1}/{images.length}
           </span>
-          <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4 }}>
-            {images.slice(0, 6).map((_, i) => (
-              <button key={i} onClick={e => { e.stopPropagation(); setIdx(i); }}
-                style={{ width: i === idx ? 14 : 6, height: 6, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0, background: i === idx ? 'white' : 'rgba(255,255,255,0.4)', transition: 'all 0.18s' }} />
-            ))}
-          </div>
         </>
       )}
     </div>
@@ -201,7 +179,6 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
-
   useEffect(() => {
     const fn = (e) => { if (e.key === 'Escape' && !saving) onClose(); };
     window.addEventListener('keydown', fn);
@@ -210,17 +187,50 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
 
   return createPortal(
     <>
-      <div onClick={() => { if (!saving) onClose(); }}
-        style={{ position: 'fixed', inset: 0, zIndex: Z.formBackdrop, background: 'rgba(10,6,4,0.72)', backdropFilter: 'blur(12px)' }} />
+      {/* Backdrop */}
+      <div
+        onClick={() => { if (!saving) onClose(); }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: Z.formBackdrop,
+          background: 'rgba(10,6,4,0.72)', backdropFilter: 'blur(12px)',
+        }}
+      />
 
-      <div onClick={e => e.stopPropagation()}
-        style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: Z.formDialog, width: 'min(680px, calc(100vw - 32px))', maxHeight: 'min(780px, calc(100dvh - 40px))', borderRadius: 22, boxShadow: '0 40px 100px rgba(0,0,0,0.55)', background: 'white', animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'DM Sans', sans-serif" }}>
-
+      {/* Dialog */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: Z.formDialog,
+          width: 'min(600px, calc(100vw - 32px))',
+          /* KEY FIX: use a fixed height so the flex children can share it properly */
+          height: 'min(680px, calc(100dvh - 48px))',
+          borderRadius: 22,
+          boxShadow: '0 40px 100px rgba(0,0,0,0.55)',
+          background: 'white',
+          animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)',
+          /* column flex so header + body + footer stack */
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        {/* Gradient top bar */}
         <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,#c0392b 0%,#e67e22 55%,#f39c12 100%)' }} />
 
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px 12px', borderBottom: '1px solid #f5ede9', background: 'white' }}>
+        {/* Header */}
+        <div style={{
+          flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 22px 12px',
+          borderBottom: '1px solid #f5ede9',
+          background: 'white',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.28)' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.28)', flexShrink: 0 }}>
               <FileText size={17} color="white" />
             </div>
             <div>
@@ -232,67 +242,103 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
               </h3>
             </div>
           </div>
-          <button onClick={onClose}
-            style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f0ed', border: '1px solid #ede8e5', color: '#78716c', cursor: 'pointer' }}>
+          <button
+            onClick={onClose}
+            style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f0ed', border: '1px solid #ede8e5', color: '#78716c', cursor: 'pointer', flexShrink: 0 }}
+          >
             <X size={14} />
           </button>
         </div>
 
-        <div style={{ flex: '1 1 0', minHeight: 550, overflowY: 'auto', overflowX: 'hidden', padding: '20px 26px', background: '#fdfaf9' }}>
+        {/* Body — scrollable, takes remaining height */}
+        <div style={{
+          flex: 1,
+          minHeight: 0,        /* critical: lets flex child shrink below content size */
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: '20px 26px',
+          background: '#fdfaf9',
+        }}>
           <form id="wrm-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
             <Section label="Report Images">
               <ImageUploader
                 images={formData.images}
-                onChange={(updater) => setFormData(p => ({ ...p, images: typeof updater === 'function' ? updater(p.images) : updater }))}
+                onChange={(updater) =>
+                  setFormData(p => ({ ...p, images: typeof updater === 'function' ? updater(p.images) : updater }))
+                }
               />
             </Section>
+
             <Section label="Report Details">
               <div>
                 <label style={LBL}>Title</label>
-                <input type="text" className="wrm-field" value={formData.title}
+                <input
+                  type="text"
+                  className="wrm-field"
+                  value={formData.title}
                   onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
-                  style={FIELD} placeholder="e.g. Fire Prevention Month Campaign" required />
-              </div>
-              <div>
-                <label style={LBL}>Description</label>
-                <textarea className="wrm-field" value={formData.description}
-                  onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
-                  style={{ ...FIELD, resize: 'vertical', minHeight: 88, lineHeight: 1.65 }}
-                  placeholder="Brief description of the activity or event…" rows={3} required />
+                  style={FIELD}
+                  placeholder="Enter Title"
+                  required
+                />
               </div>
             </Section>
+
             <Section label="Classification">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }} className="wrm-2col">
-                <div>
-                  <label style={LBL}>Date</label>
-                  <div style={{ position: 'relative' }}>
-                    <Calendar size={13} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: '#c4b5b0', pointerEvents: 'none' }} />
-                    <input type="date" className="wrm-field" value={formData.date}
-                      onChange={e => setFormData(p => ({ ...p, date: e.target.value }))}
-                      style={{ ...FIELD, paddingLeft: 36 }} required />
-                  </div>
-                </div>
-                <div>
-                  <label style={LBL}>Category</label>
-                  <select className="wrm-field" value={formData.category}
-                    onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
-                    style={FIELD} required>
-                    {CATEGORY_OPTIONS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label style={LBL}>Category</label>
+                <select
+                  className="wrm-field"
+                  value={formData.category}
+                  onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}
+                  style={FIELD}
+                  required
+                >
+                  {CATEGORY_OPTIONS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
               </div>
             </Section>
+
           </form>
         </div>
 
-        <div style={{ flexShrink: 0, padding: '15px 26px 20px', borderTop: '1px solid #f0e8e5', background: 'white', display: 'flex', gap: 11 }}>
-          <button type="submit" form="wrm-form" disabled={saving}
-            style={{ flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12, fontSize: 14, color: 'white', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: saving ? 'linear-gradient(135deg,#dba8a1,#e8b8a8)' : 'linear-gradient(135deg,#c0392b 0%,#e67e22 100%)', boxShadow: saving ? 'none' : '0 4px 18px rgba(192,57,43,0.3)', transition: 'all 0.18s', fontFamily: 'inherit' }}>
-            {saving && <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.5)', borderTopColor: 'white', animation: 'wrmSpin 0.8s linear infinite' }} />}
+        {/* Footer */}
+        <div style={{
+          flexShrink: 0,
+          padding: '15px 26px 20px',
+          borderTop: '1px solid #f0e8e5',
+          background: 'white',
+          display: 'flex', gap: 11,
+        }}>
+          <button
+            type="submit" form="wrm-form" disabled={saving}
+            style={{
+              flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12,
+              fontSize: 14, color: 'white', border: 'none',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              background: saving
+                ? 'linear-gradient(135deg,#dba8a1,#e8b8a8)'
+                : 'linear-gradient(135deg,#c0392b 0%,#e67e22 100%)',
+              boxShadow: saving ? 'none' : '0 4px 18px rgba(192,57,43,0.3)',
+              transition: 'all 0.18s', fontFamily: 'inherit',
+            }}
+          >
+            {saving && (
+              <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.5)', borderTopColor: 'white', animation: 'wrmSpin 0.8s linear infinite' }} />
+            )}
             {saving ? 'Saving…' : editingReport ? 'Update Report' : 'Publish Report'}
           </button>
-          <button type="button" onClick={onClose} disabled={saving}
-            style={{ flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12, fontSize: 14, background: '#f5f0ed', border: '1px solid #e8ddd8', color: '#57534e', cursor: saving ? 'not-allowed' : 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
+          <button
+            type="button" onClick={onClose} disabled={saving}
+            style={{
+              flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12,
+              fontSize: 14, background: '#f5f0ed', border: '1px solid #e8ddd8',
+              color: '#57534e', cursor: saving ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s', fontFamily: 'inherit', opacity: saving ? 0.6 : 1,
+            }}
+          >
             Cancel
           </button>
         </div>
@@ -302,16 +348,13 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
   );
 }
 
-// ─── Delete Confirmation Modal ────────────────────────────────────────────────
 function DeleteModal({ report, onConfirm, onCancel, deleting }) {
   const images = getImages(report);
-
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = prev; };
   }, []);
-
   useEffect(() => {
     const fn = (e) => { if (e.key === 'Escape' && !deleting) onCancel(); };
     window.addEventListener('keydown', fn);
@@ -320,14 +363,27 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
 
   return createPortal(
     <>
-      <div onClick={() => { if (!deleting) onCancel(); }}
-        style={{ position: 'fixed', inset: 0, zIndex: Z.deleteBackdrop, background: 'rgba(10,6,4,0.55)', backdropFilter: 'blur(4px)' }} />
-
-      <div onClick={e => e.stopPropagation()}
-        style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: Z.deleteDialog, width: 'min(460px, calc(100vw - 32px))', borderRadius: 22, boxShadow: '0 40px 100px rgba(0,0,0,0.65)', background: 'white', animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'DM Sans', sans-serif" }}>
-
+      <div
+        onClick={() => { if (!deleting) onCancel(); }}
+        style={{ position: 'fixed', inset: 0, zIndex: Z.deleteBackdrop, background: 'rgba(10,6,4,0.55)', backdropFilter: 'blur(4px)' }}
+      />
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: 'fixed', top: '50%', left: '50%',
+          transform: 'translate(-50%,-50%)',
+          zIndex: Z.deleteDialog,
+          width: 'min(460px, calc(100vw - 32px))',
+          borderRadius: 22,
+          boxShadow: '0 40px 100px rgba(0,0,0,0.65)',
+          background: 'white',
+          animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)',
+          display: 'flex', flexDirection: 'column',
+          overflow: 'hidden',
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
         <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,#c0392b 0%,#e67e22 55%,#f39c12 100%)' }} />
-
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 26px 18px', borderBottom: '1px solid #f5ede9', background: 'white' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
             <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(192,57,43,0.08)', border: '1.5px solid rgba(192,57,43,0.18)' }}>
@@ -345,36 +401,19 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
             </button>
           )}
         </div>
-
         <div style={{ padding: '20px 26px', background: '#fdfaf9', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid #f0e8e5', background: 'white' }}>
             {images.length > 0 && (
               <div style={{ height: 96, overflow: 'hidden', position: 'relative' }}>
                 <img src={images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(0,0,0,0.5) 0%,transparent 60%)' }} />
-                {images.length > 1 && (
-                  <span style={{ position: 'absolute', bottom: 8, right: 10, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 7, padding: '2px 8px', fontSize: 10, fontWeight: 700, color: 'white', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    <ImageIcon size={9} /> {images.length} photos
-                  </span>
-                )}
               </div>
             )}
             <div style={{ padding: '12px 16px' }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#1a1714', margin: '0 0 5px', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {report.title}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, color: '#a8a29e', fontWeight: 600 }}>{fmtDate(report.date)}</span>
-                {report.category && (
-                  <>
-                    <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#d6ccc8' }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#78716c' }}>{report.category}</span>
-                  </>
-                )}
-              </div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#1a1714', margin: '0 0 5px', lineHeight: 1.35 }}>{report.title}</p>
+              {report.category && <span style={{ fontSize: 11, fontWeight: 700, color: '#78716c' }}>{report.category}</span>}
             </div>
           </div>
-
           <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.14)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <AlertTriangle size={15} style={{ color: '#c0392b', flexShrink: 0, marginTop: 1 }} />
             <p style={{ fontSize: 12.5, color: '#78716c', lineHeight: 1.65, margin: 0 }}>
@@ -382,13 +421,13 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
             </p>
           </div>
         </div>
-
         <div style={{ flexShrink: 0, padding: '15px 26px 22px', borderTop: '1px solid #f0e8e5', background: 'white', display: 'flex', gap: 11 }}>
           <button onClick={onConfirm} disabled={deleting}
             style={{ flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12, fontSize: 14, color: 'white', border: 'none', cursor: deleting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: deleting ? 'linear-gradient(135deg,#dba8a1,#e8b8a8)' : 'linear-gradient(135deg,#c0392b 0%,#a93226 100%)', boxShadow: deleting ? 'none' : '0 4px 18px rgba(192,57,43,0.3)', transition: 'all 0.18s', fontFamily: 'inherit' }}>
             {deleting
               ? <><div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.5)', borderTopColor: 'white', animation: 'wrmSpin 0.8s linear infinite' }} />Deleting…</>
-              : 'Yes, Delete'}
+              : 'Yes, Delete'
+            }
           </button>
           <button onClick={onCancel} disabled={deleting}
             style={{ flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12, fontSize: 14, background: '#f5f0ed', border: '1px solid #e8ddd8', color: '#57534e', cursor: deleting ? 'not-allowed' : 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', opacity: deleting ? 0.6 : 1 }}>
@@ -401,14 +440,12 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
   );
 }
 
-// ─── Report Card ──────────────────────────────────────────────────────────────
 function ReportCard({ report, onEdit, onDelete, isArchived }) {
   const s    = getCategoryStyle(report.category);
   const imgs = getImages(report);
 
   return (
     <div className={`report-card${isArchived ? ' archived' : ''}`}>
-      {/* Fixed-height image zone */}
       <div style={{ position: 'relative', flexShrink: 0 }}>
         <CardImages images={imgs} />
         <span className={`absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide ${s.badge}`}>
@@ -426,54 +463,20 @@ function ReportCard({ report, onEdit, onDelete, isArchived }) {
         )}
       </div>
 
-      {/* Body — flex: 1 so action buttons always stick to the bottom */}
-      <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        {/* Date + photo count */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: isArchived ? '#c4b5b0' : '#a8a29e' }}>{fmtDate(report.date)}</span>
-          {imgs.length > 1 && (
-            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: isArchived ? '#d6ccc8' : '#c4b5b0' }}>
+      <div style={{ padding: '16px 20px 0', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {imgs.length > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, color: '#c4b5b0' }}>
               <ImageIcon size={11} /> {imgs.length}
             </span>
-          )}
-        </div>
-
-        {/* Title — always 2 lines max */}
-        <h3 style={{
-          fontWeight: 800, fontSize: 20, lineHeight: 1.35,
-          color: isArchived ? '#78716c' : '#1c1917',
-          margin: '0 0 10px', flexShrink: 0,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-        }}>
+          </div>
+        )}
+        <h3 style={{ fontWeight: 800, fontSize: 18, lineHeight: 1.35, color: isArchived ? '#78716c' : '#1c1917', margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {report.title}
         </h3>
-
-        {/*
-          Description — FIXED height box, scrollable.
-          No expand/collapse, no layout shift, grid never moves.
-          Users scroll inside the box to read long descriptions.
-        */}
-        <div
-          className="wrm-desc-scroll"
-          style={{
-            height: '5.16em',   /* exactly 3 lines at lineHeight 1.72 */
-            flexShrink: 0,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            paddingRight: 4,
-            marginBottom: 16,
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#e8d5d0 transparent',
-          }}
-        >
-          <p style={{ fontSize: 14, lineHeight: 1.72, color: isArchived ? '#a8a29e' : '#78716c', margin: 0 }}>
-            {report.description}
-          </p>
-        </div>
       </div>
 
-      {/* Action buttons — always pinned to bottom */}
-      <div style={{ padding: '12px 20px 18px', flexShrink: 0, borderTop: '1px solid #f5ede9', display: 'flex', gap: 8 }}>
+      <div style={{ padding: '14px 20px 18px', flexShrink: 0, borderTop: '1px solid #f5ede9', display: 'flex', gap: 8, marginTop: 'auto' }}>
         {!isArchived && (
           <button onClick={() => onEdit(report)}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13, fontWeight: 700, padding: '11px 0', borderRadius: 10, background: 'rgba(59,130,246,0.06)', border: '1.5px solid rgba(59,130,246,0.15)', color: '#2563eb', cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -489,27 +492,22 @@ function ReportCard({ report, onEdit, onDelete, isArchived }) {
   );
 }
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
 function EmptyState({ isArchived }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 0', background: 'white', borderRadius: 20, border: '1.5px dashed #f0d8d3' }}>
       <div style={{ width: 56, height: 56, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, background: isArchived ? 'rgba(120,113,108,0.06)' : 'rgba(192,57,43,0.06)', border: `1.5px dashed ${isArchived ? 'rgba(120,113,108,0.2)' : 'rgba(192,57,43,0.2)'}` }}>
-        {isArchived
-          ? <Archive size={22} style={{ color: '#b5b0ac' }} />
-          : <FileText size={22} style={{ color: '#d4b8b3' }} />
-        }
+        {isArchived ? <Archive size={22} style={{ color: '#b5b0ac' }} /> : <FileText size={22} style={{ color: '#d4b8b3' }} />}
       </div>
       <p style={{ fontWeight: 600, fontSize: 14, color: '#a8a29e', margin: 0 }}>
-        {isArchived ? 'No archived reports yet' : 'No active reports this week'}
+        {isArchived ? 'No archived posts yet' : 'No active posts'}
       </p>
       <p style={{ fontSize: 12, color: '#c4b5b0', marginTop: 4, marginBottom: 0 }}>
-        {isArchived ? 'Reports older than 7 days will appear here automatically' : 'Click "Add Report" to publish a new update'}
+        {isArchived ? 'Older posts will appear here' : 'Click "Add Activity" to publish a new update'}
       </p>
     </div>
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 export function WeeklyReportsManager() {
   const [reports,       setReports]       = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -520,11 +518,7 @@ export function WeeklyReportsManager() {
   const [deleting,      setDeleting]      = useState(false);
   const [tab,           setTab]           = useState('live');
 
-  const [formData, setFormData] = useState({
-    images: [], title: '', description: '',
-    date: new Date().toISOString().split('T')[0],
-    category: 'Event',
-  });
+  const [formData, setFormData] = useState({ images: [], title: '', category: 'Event' });
 
   useEffect(() => { loadReports(); }, []);
 
@@ -532,11 +526,7 @@ export function WeeklyReportsManager() {
     setLoading(true);
     try {
       const data = await getWeeklyReports();
-      setReports(data.sort((a, b) => {
-        const da = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-        const db = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-        return db - da;
-      }));
+      setReports(data.sort((a, b) => String(b.id).localeCompare(String(a.id))));
     } catch (err) {
       console.error('[WeeklyReports] loadReports failed:', err);
       toast.error('Failed to load reports');
@@ -550,9 +540,11 @@ export function WeeklyReportsManager() {
     try {
       const compressedImages = await compressAll(formData.images);
       const payload = {
-        images: compressedImages, coverImage: compressedImages[0],
-        title: formData.title.trim(), description: formData.description.trim(),
-        date: formData.date, category: formData.category,
+        images: compressedImages,
+        coverImage: compressedImages[0],
+        title: formData.title.trim(),
+        category: formData.category,
+        date: new Date().toISOString().split('T')[0],
       };
 
       if (editingReport) {
@@ -562,11 +554,7 @@ export function WeeklyReportsManager() {
       } else {
         const newId = Date.now().toString();
         await saveWeeklyReport(newId, payload);
-        setReports(prev => [{ ...payload, id: newId }, ...prev].sort((a, b) => {
-          const da = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-          const db = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-          return db - da;
-        }));
+        setReports(prev => [{ ...payload, id: newId }, ...prev]);
         toast.success('Report published!');
         setTab('live');
       }
@@ -579,10 +567,7 @@ export function WeeklyReportsManager() {
 
   const handleEdit = (report) => {
     setEditingReport(report);
-    const dateVal = report.date?.toDate
-      ? report.date.toDate().toISOString().split('T')[0]
-      : report.date;
-    setFormData({ images: getImages(report), title: report.title, description: report.description, date: dateVal, category: report.category });
+    setFormData({ images: getImages(report), title: report.title, category: report.category });
     setIsFormOpen(true);
   };
 
@@ -601,7 +586,7 @@ export function WeeklyReportsManager() {
   };
 
   const resetForm = () => {
-    setFormData({ images: [], title: '', description: '', date: new Date().toISOString().split('T')[0], category: 'Event' });
+    setFormData({ images: [], title: '', category: 'Event' });
     setEditingReport(null);
     setIsFormOpen(false);
   };
@@ -615,81 +600,45 @@ export function WeeklyReportsManager() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
-
         @keyframes wrmSpin   { to { transform: rotate(360deg); } }
         @keyframes wrmOmIn   { from { opacity:0; transform:translate(-50%,-50%) scale(0.92); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
         @keyframes wrmPulse  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.45;transform:scale(0.65)} }
         @keyframes wrmFadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-
-        .report-card {
-          background: white;
-          border: 1.5px solid #f0e8e5;
-          border-radius: 16px;
-          overflow: visible;
-          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-          display: flex;
-          flex-direction: column;
-          animation: wrmFadeIn 0.28s ease both;
-          position: relative;
-          height: 100%;
-        }
-        .report-card > div:first-child { border-radius: 14px 14px 0 0; overflow: hidden; }
-        .report-card:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(192,57,43,0.1); border-color: #e8c4bc; }
-        .report-card.archived:hover { box-shadow: 0 8px 22px rgba(0,0,0,0.07); border-color: #ddd6d2; }
-
+        .report-card { background:white; border:1.5px solid #f0e8e5; border-radius:16px; overflow:visible; transition:transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease; display:flex; flex-direction:column; animation:wrmFadeIn 0.28s ease both; position:relative; height:100%; }
+        .report-card > div:first-child { border-radius:14px 14px 0 0; overflow:hidden; }
+        .report-card:hover { transform:translateY(-3px); box-shadow:0 14px 36px rgba(192,57,43,0.1); border-color:#e8c4bc; }
+        .report-card.archived:hover { box-shadow:0 8px 22px rgba(0,0,0,0.07); border-color:#ddd6d2; }
         .wrm-field:focus { border-color:#c0392b !important; box-shadow:0 0 0 3px rgba(192,57,43,0.08); outline:none; }
         .wrm-thumb-ctrl { opacity:0; transition:opacity 0.18s; }
         .wrm-thumb:hover .wrm-thumb-ctrl { opacity:1; }
-
-        /* Slim scrollbar for description box */
-        .wrm-desc-scroll::-webkit-scrollbar { width: 3px; }
-        .wrm-desc-scroll::-webkit-scrollbar-track { background: transparent; }
-        .wrm-desc-scroll::-webkit-scrollbar-thumb { background: #e8d5d0; border-radius: 99px; }
-        .wrm-desc-scroll::-webkit-scrollbar-thumb:hover { background: #c4a9a3; }
-
-        .wrm-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-          align-items: stretch;
-        }
-        .wrm-grid > div { display: flex; flex-direction: column; }
-
-        @media (max-width:900px)  { .wrm-grid { grid-template-columns: repeat(2,1fr) !important; } }
-        @media (max-width:580px)  { .wrm-grid { grid-template-columns: 1fr !important; } }
-        @media (max-width:480px)  { .wrm-2col { grid-template-columns: 1fr !important; } }
-
+        .wrm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:stretch; }
+        .wrm-grid > div { display:flex; flex-direction:column; }
+        @media (max-width:900px) { .wrm-grid { grid-template-columns:repeat(2,1fr) !important; } }
+        @media (max-width:580px) { .wrm-grid { grid-template-columns:1fr !important; } }
         .wrm-ph { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:24px; }
         @media (max-width:480px) { .wrm-ph { flex-direction:column; align-items:stretch; } .wrm-ph button { width:100%; justify-content:center; } }
-
-        .wrm-tab-btn {
-          display: flex; align-items: center; gap: 8px;
-          padding: 10px 18px; border-radius: 10px; border: none;
-          font-weight: 700; font-size: 13px; cursor: pointer;
-          transition: all 0.18s; font-family: inherit; white-space: nowrap;
-          background: transparent; color: #78716c;
-        }
-        .wrm-tab-btn:hover { background: rgba(255,255,255,0.7); }
-        .wrm-tab-btn.active { background: white; color: #1c1917; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .wrm-tab-btn { display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:10px; border:none; font-weight:700; font-size:13px; cursor:pointer; transition:all 0.18s; font-family:inherit; white-space:nowrap; background:transparent; color:#78716c; }
+        .wrm-tab-btn:hover { background:rgba(255,255,255,0.7); }
+        .wrm-tab-btn.active { background:white; color:#1c1917; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
       `}</style>
 
-      {/* ── Page header ── */}
       <div className="wrm-ph">
         <div>
           <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#c0392b', marginBottom: 4 }}>Content Management</p>
-          <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917', lineHeight: 1, margin: 0 }}>Weekly Reports</h2>
+          <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917', lineHeight: 1, margin: 0 }}>Weekly Activities</h2>
           <p style={{ fontSize: 13, color: '#a8a29e', marginTop: 4, marginBottom: 0 }}>
-            <span style={{ color: '#10b981', fontWeight: 700 }}>{activeReports.length}</span> live this week
+            <span style={{ color: '#10b981', fontWeight: 700 }}>{activeReports.length}</span> live
             {archivedReports.length > 0 && <> · {archivedReports.length} archived</>}
           </p>
         </div>
-        <button onClick={() => setIsFormOpen(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, padding: '11px 22px', borderRadius: 12, color: 'white', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)', fontFamily: 'inherit' }}>
+        <button
+          onClick={() => setIsFormOpen(true)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, padding: '11px 22px', borderRadius: 12, color: 'white', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)', fontFamily: 'inherit' }}
+        >
           Add Report
         </button>
       </div>
 
-      {/* ── Tab switcher ── */}
       <div style={{ display: 'inline-flex', gap: 4, padding: 5, background: '#f0ece9', borderRadius: 13, marginBottom: 28 }}>
         <button className={`wrm-tab-btn${tab === 'live' ? ' active' : ''}`} onClick={() => setTab('live')}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: tab === 'live' ? '#10b981' : '#c4b5b0', flexShrink: 0, animation: tab === 'live' ? 'wrmPulse 1.8s ease-in-out infinite' : 'none' }} />
@@ -707,17 +656,15 @@ export function WeeklyReportsManager() {
         </button>
       </div>
 
-      {/* Archived info notice */}
       {tab === 'archived' && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 15px', borderRadius: 11, background: 'rgba(120,113,108,0.05)', border: '1px solid rgba(120,113,108,0.12)', marginBottom: 22 }}>
           <Archive size={13} style={{ color: '#b5b0ac', flexShrink: 0, marginTop: 1 }} />
           <p style={{ fontSize: 12, color: '#a8a29e', lineHeight: 1.6, margin: 0 }}>
-            These reports are older than 7 days and <strong style={{ color: '#78716c' }}>not visible</strong> on the public homepage. You can still delete them here.
+            These reports are older than 7 days and <strong style={{ color: '#78716c' }}>not visible</strong> on the public homepage.
           </p>
         </div>
       )}
 
-      {/* ── Content area ── */}
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 0', background: 'white', borderRadius: 20, border: '1.5px solid #f0e8e5' }}>
           <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2.5px solid #c0392b', borderTopColor: 'transparent', animation: 'wrmSpin 0.9s linear infinite', marginBottom: 12 }} />
@@ -729,18 +676,12 @@ export function WeeklyReportsManager() {
         <div className="wrm-grid">
           {visibleReports.map((report, i) => (
             <div key={report.id} style={{ animationDelay: `${i * 28}ms` }}>
-              <ReportCard
-                report={report}
-                onEdit={handleEdit}
-                onDelete={setDeleteTarget}
-                isArchived={tab === 'archived'}
-              />
+              <ReportCard report={report} onEdit={handleEdit} onDelete={setDeleteTarget} isArchived={tab === 'archived'} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Modals */}
       {isFormOpen && (
         <FormModal
           editingReport={editingReport}

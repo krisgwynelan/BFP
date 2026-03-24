@@ -94,15 +94,74 @@ function compressImage(file, mW=400, mH=400, q=0.72) {
   return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); let{width:w,height:h}=img; if(w>mW||h>mH){const rt=Math.min(mW/w,mH/h);w=Math.round(w*rt);h=Math.round(h*rt);} c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',q)); };img.onerror=rej;img.src=e.target.result; };r.onerror=rej;r.readAsDataURL(file); });
 }
 
-/* ─── Avatar ────────────────────────────────────────────────────── */
-function Avatar({ src, name, size=40, circle=false, sx={} }) {
+/* ─── Default Avatar SVG — person silhouette ───────────────────── */
+/**
+ * Renders an inline SVG silhouette avatar at the requested size.
+ * `bgColor`   — fill of the circle background
+ * `bodyColor` — fill of the head + shoulders shape
+ * `size`      — overall width/height in px
+ */
+function DefaultAvatarSVG({ size = 40, bgColor = 'rgba(192,57,43,0.10)', bodyColor = 'rgba(192,57,43,0.55)', borderRadius = '50%', border = '1.5px solid rgba(192,57,43,0.14)', style = {} }) {
+  // All paths are drawn in a 100×100 coordinate space and scaled via viewBox.
+  // Head: circle centred at (50, 36), r=18
+  // Shoulders: rounded-top elliptical fill from y≈56 down to y=100
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{
+        flexShrink: 0,
+        borderRadius,
+        border,
+        background: bgColor,
+        display: 'block',
+        ...style,
+      }}
+    >
+      {/* Head */}
+      <circle cx="50" cy="38" r="20" fill={bodyColor} />
+      {/* Shoulders / body — clipped to bottom half so it doesn't bleed out */}
+      <ellipse cx="50" cy="92" rx="30" ry="22" fill={bodyColor} />
+    </svg>
+  );
+}
+
+/* ─── Avatar — shows silhouette when no image ───────────────────── */
+function Avatar({ src, name, size = 40, circle = false, sx = {} }) {
   const [broken, setBroken] = useState(false);
-  useEffect(()=>{ setBroken(false); }, [src]);
-  const initials = (name||'?').split(' ').filter(Boolean).map(n=>n[0]).slice(0,2).join('').toUpperCase();
-  const r = circle ? '50%' : 9;
-  if (!src || broken)
-    return <div style={{ width:size, height:size, borderRadius:r, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:size>60?24:13, background:'linear-gradient(135deg,rgba(192,57,43,0.1),rgba(230,126,34,0.1))', border:'1.5px solid rgba(192,57,43,0.14)', color:'#c0392b', letterSpacing:0, ...sx }}>{initials}</div>;
-  return <img src={src} alt={name} onError={()=>setBroken(true)} style={{ width:size, height:size, borderRadius:r, objectFit:'cover', flexShrink:0, ...sx }} />;
+  useEffect(() => { setBroken(false); }, [src]);
+  const borderRadius = circle ? '50%' : 9;
+
+  if (!src || broken) {
+    return (
+      <DefaultAvatarSVG
+        size={size}
+        bgColor="rgba(192,57,43,0.09)"
+        bodyColor="rgba(192,57,43,0.45)"
+        borderRadius={borderRadius}
+        border="1.5px solid rgba(192,57,43,0.14)"
+        style={sx}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      onError={() => setBroken(true)}
+      style={{
+        width: size,
+        height: size,
+        borderRadius,
+        objectFit: 'cover',
+        flexShrink: 0,
+        ...sx,
+      }}
+    />
+  );
 }
 
 function fmtDate(s) {
@@ -192,6 +251,7 @@ function DeleteModal({ officer, onConfirm, onCancel, deleting }) {
           <h3 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:'1.7rem', letterSpacing:'0.06em', color:'#1a1714', textAlign:'center', margin:'0 0 6px' }}>Delete Officer?</h3>
           <p style={{ textAlign:'center', fontSize:14, color:'#78716c', margin:'0 0 16px', lineHeight:1.65 }}>This action cannot be undone. The officer will be permanently removed.</p>
           <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, background:'#fdf8f6', border:'1.5px solid #f0e8e5', marginBottom:20 }}>
+            {/* Use Avatar so delete modal also shows silhouette default */}
             <Avatar src={officer.profileImage} name={officer.fullName} size={42} circle sx={{ border:'2px solid #ede8e5', flexShrink:0 }} />
             <div style={{ minWidth:0 }}>
               <p style={{ fontWeight:700, fontSize:15, color:'#1a1714', margin:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{officer.fullName}</p>
@@ -218,6 +278,28 @@ function FormModal({ editingOfficer, form, setForm, fileRef, uploading, saving, 
   const lbl = { display:'block', fontSize:9.5, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.15em', color:'#9ca3af', marginBottom:6 };
   const section = { padding:'16px 18px', borderRadius:14, background:'white', border:'1px solid #f0e8e5', boxShadow:'0 1px 4px rgba(0,0,0,0.03)', display:'flex', flexDirection:'column', gap:13 };
   const sectionTitle = { fontSize:9.5, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.14em', color:'#c0392b', margin:0 };
+
+  const previewSize = 64;
+
+  /* Preview: real image if uploaded, otherwise the silhouette SVG */
+  const preview = form.profileImage
+    ? (
+      <img
+        src={form.profileImage}
+        alt="Preview"
+        style={{ width:previewSize, height:previewSize, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'3px solid #f0e8e5' }}
+      />
+    )
+    : (
+      <DefaultAvatarSVG
+        size={previewSize}
+        bgColor="rgba(192,57,43,0.08)"
+        bodyColor="rgba(192,57,43,0.38)"
+        borderRadius="50%"
+        border="2px dashed rgba(192,57,43,0.28)"
+      />
+    );
+
   return (
     <ModalPortal>
       <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:999990, background:'rgba(10,6,4,0.72)', backdropFilter:'blur(12px)' }} />
@@ -238,7 +320,7 @@ function FormModal({ editingOfficer, form, setForm, fileRef, uploading, saving, 
             <div style={{...section}}>
               <p style={sectionTitle}>Profile Photo</p>
               <div style={{ display:'flex', gap:14, alignItems:'center' }}>
-                {form.profileImage?<Avatar src={form.profileImage} name={form.fullName||'Preview'} size={64} circle sx={{ border:'3px solid #f0e8e5', flexShrink:0 }} />:<div style={{ width:64, height:64, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f0ed', border:'2px dashed #d8ccc8', flexShrink:0 }}><Users size={22} style={{ color:'#d4b8b3' }} /></div>}
+                {preview}
                 <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                   <button type="button" className="om-upload-btn" onClick={()=>fileRef.current?.click()} disabled={uploading} style={{ display:'flex', alignItems:'center', gap:7, fontSize:13, fontWeight:700, padding:'8px 15px', borderRadius:9, background:uploading?'#fdf3f0':'#f5f0ed', border:`1px solid ${uploading?'rgba(192,57,43,0.25)':'#e8ddd8'}`, color:uploading?'#c0392b':'#57534e', cursor:uploading?'not-allowed':'pointer', fontFamily:'inherit' }}>
                     {uploading?<><div style={{ width:11,height:11,borderRadius:'50%',border:'2px solid currentColor',borderTopColor:'transparent',animation:'omSpin 0.8s linear infinite' }}/>Processing…</>:<><UploadCloud size={12}/>{form.profileImage?'Change Photo':'Upload Photo'}</>}
@@ -249,7 +331,7 @@ function FormModal({ editingOfficer, form, setForm, fileRef, uploading, saving, 
             </div>
             <div style={{...section}}>
               <p style={sectionTitle}>Personal Information</p>
-              <div><label style={lbl}>Full Name</label><input type="text" className="om-field" value={form.fullName} onChange={e=>setForm(p=>({...p,fullName:e.target.value}))} style={field} placeholder="e.g. Juan Dela Cruz" required /></div>
+              <div><label style={lbl}>Full Name</label><input type="text" className="om-field" value={form.fullName} onChange={e=>setForm(p=>({...p,fullName:e.target.value}))} style={field} placeholder="Enter Full Name" required /></div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <div><label style={lbl}>Rank</label><select className="om-field" value={form.rank} onChange={e=>setForm(p=>({...p,rank:e.target.value}))} style={field} required>{RANK_OPTIONS.map(r=><option key={r} value={r}>{r} ({RANK_ABBREVIATIONS[r]})</option>)}</select></div>
                 <div><label style={lbl}>Birthdate</label><div style={{ position:'relative' }}><Calendar size={12} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#c4b5b0', pointerEvents:'none' }} /><input type="date" className="om-field" value={form.birthdate} onChange={e=>setForm(p=>({...p,birthdate:e.target.value}))} style={{...field,paddingLeft:34}} /></div></div>
@@ -264,8 +346,8 @@ function FormModal({ editingOfficer, form, setForm, fileRef, uploading, saving, 
                 <p style={{ fontSize:11, color:'#b5a8a3', margin:'4px 0 0', fontWeight:500, lineHeight:1.4 }}>Separate multiple roles with commas.</p>
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div><label style={lbl}>Contact Number</label><div style={{ position:'relative' }}><Phone size={12} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#c4b5b0', pointerEvents:'none' }} /><input type="tel" className="om-field" value={form.contactNumber} onChange={e=>setForm(p=>({...p,contactNumber:e.target.value}))} style={{...field,paddingLeft:34}} placeholder="+63 912 345 6789" required /></div></div>
-                <div><label style={lbl}>Account Number</label><div style={{ position:'relative' }}><CreditCard size={12} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#c4b5b0', pointerEvents:'none' }} /><input type="text" className="om-field" value={form.accountNumber} onChange={e=>setForm(p=>({...p,accountNumber:e.target.value}))} style={{...field,paddingLeft:34,fontFamily:'Poppins'}} placeholder="BFP-CDO-001" required /></div></div>
+                <div><label style={lbl}>Contact Number</label><div style={{ position:'relative' }}><Phone size={12} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#c4b5b0', pointerEvents:'none' }} /><input type="tel" className="om-field" value={form.contactNumber} onChange={e=>setForm(p=>({...p,contactNumber:e.target.value}))} style={{...field,paddingLeft:34}} placeholder="Enter Contact Number" required /></div></div>
+                <div><label style={lbl}>Account Number</label><div style={{ position:'relative' }}><CreditCard size={12} style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'#c4b5b0', pointerEvents:'none' }} /><input type="text" className="om-field" value={form.accountNumber} onChange={e=>setForm(p=>({...p,accountNumber:e.target.value}))} style={{...field,paddingLeft:34,fontFamily:'Poppins'}} placeholder="Enter Account Number" required /></div></div>
               </div>
             </div>
             <div style={{...section}}>
@@ -348,7 +430,6 @@ export function OfficersManager() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (uploading) { toast.error('Wait for image to finish.'); return; }
-    if (!form.profileImage) { toast.error('Please upload a profile image!'); return; }
     const finalForm = { ...form, isLeader: isAutoLeaderCat(form.category)?true:form.isLeader };
     if (finalForm.isLeader && finalForm.category) {
       const conflicting = officers.find(o=>o.isLeader&&o.category===finalForm.category&&(!editingOfficer||o.id!==editingOfficer.id));
@@ -408,7 +489,6 @@ export function OfficersManager() {
   const uRanks = ['All Ranks', ...RANKS.filter(r=>officers.some(o=>o.rank===r))];
 
   return (
-    // ── KEY FIX: removed minHeight:'100vh' and changed padding-bottom to 0 ──
     <div style={{ padding:'22px 18px 0', fontFamily:"'DM Sans', sans-serif", background:'#f5f3f0' }}>
       <style>{STYLES}</style>
 
@@ -564,7 +644,7 @@ export function OfficersManager() {
                       <td className="c-ctr" style={{ verticalAlign:'middle' }}>
                         {isLdr ? (
                           <span className="om-badge" style={{ background:'linear-gradient(135deg,rgba(192,57,43,0.09),rgba(230,126,34,0.09))', border:'1px solid rgba(192,57,43,0.2)', color:'#c0392b' }}>
-                            Ldr
+                            OIC
                           </span>
                         ) : (
                           <span style={{ fontSize:14, color:'#d6ccc8' }}>—</span>
@@ -617,7 +697,6 @@ export function OfficersManager() {
         )}
       </div>
 
-      {/* Count label — tight margin, no extra bottom space */}
       {!loading && filtered.length > 0 && (
         <p style={{ textAlign:'right', fontSize:11, color:'#c4b5b0', margin:'6px 0 0', fontWeight:500, lineHeight:1, paddingBottom:22 }}>
           {filtered.length} officer{filtered.length!==1?'s':''} shown

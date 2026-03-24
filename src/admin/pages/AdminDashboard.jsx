@@ -333,7 +333,7 @@ export function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
                 { tab: 'officers', icon: Users,    color: '#c0392b', bg: '#fff5f3', border: '#fad0c8', title: 'Manage Officers',  desc: 'Add, edit, or remove officer records from the roster' },
-                { tab: 'reports',  icon: FileText, color: '#d35400', bg: '#fff8f3', border: '#fcd5b0', title: 'Weekly Reports',  desc: 'Publish and manage station activities & updates' },
+                { tab: 'reports',  icon: FileText, color: '#d35400', bg: '#fff8f3', border: '#fcd5b0', title: 'Weekly Activities',  desc: 'Publish and manage station activities & updates' },
                 { tab: 'contact',  icon: Phone,    color: '#b45309', bg: '#fffbf0', border: '#fde9a8', title: 'Contact Info',    desc: 'Update public emergency contact details' },
               ].map(({ tab, icon: Icon, color, bg, border, title, desc }) => (
                 <button key={tab} onClick={() => setActiveTab(tab)} className="quick-btn group">
