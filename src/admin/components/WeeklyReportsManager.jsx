@@ -3,12 +3,17 @@ import { createPortal } from 'react-dom';
 import {
   Edit, Trash2, X, FileText,
   ChevronLeft, ChevronRight, Image as ImageIcon,
-  UploadCloud, AlertTriangle, Archive,
+  UploadCloud, AlertTriangle, Archive, Link, HardDrive,
 } from 'lucide-react';
 
 import { CATEGORY_OPTIONS } from '../../utils/types';
 import { getWeeklyReports, saveWeeklyReport, deleteWeeklyReport } from '../../utils/storage';
 import { toast } from 'sonner';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const MAX_UPLOAD_IMAGES = 3;   // max number of file-uploaded (base64) images
+const MAX_TOTAL_MB      = 4;
+const MAX_TOTAL_BYTES   = MAX_TOTAL_MB * 1024 * 1024;
 
 const Z = {
   formBackdrop:   99990,
@@ -17,6 +22,7 @@ const Z = {
   deleteDialog:   99993,
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function isActive(report) {
   if (!report.date) return true;
   const d = report.date?.toDate ? report.date.toDate() : new Date(report.date);
@@ -24,7 +30,7 @@ function isActive(report) {
   return diff >= 0 && diff <= 7 * 24 * 60 * 60 * 1000;
 }
 
-function compressImage(dataUrl, maxDim = 1200, quality = 0.82) {
+function compressImage(dataUrl, maxDim = 1200, quality = 0.80) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -42,10 +48,35 @@ function compressImage(dataUrl, maxDim = 1200, quality = 0.82) {
     img.src = dataUrl;
   });
 }
+
 async function compressAll(images) {
-  return Promise.all(images.map(src => compressImage(src)));
+  return Promise.all(images.map(src =>
+    src.startsWith('http') ? src : compressImage(src)
+  ));
 }
 
+function calcTotalBytes(images) {
+  return images.reduce((acc, src) => {
+    if (src.startsWith('data:')) {
+      const base64 = src.split(',')[1] || '';
+      return acc + Math.round(base64.length * 0.75);
+    }
+    return acc;
+  }, 0);
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/** Count only file-uploaded (base64) images */
+function countUploaded(images) {
+  return images.filter(s => s.startsWith('data:')).length;
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const CATEGORY_STYLES = {
   Event:       { dot: 'bg-blue-500',    badge: 'bg-blue-50 text-blue-700 border border-blue-200' },
   Training:    { dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
@@ -71,6 +102,7 @@ const LBL = {
   letterSpacing: '0.15em', color: '#9ca3af', marginBottom: 7,
 };
 
+// ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ label, children }) {
   return (
     <div style={{ padding: '18px 20px', borderRadius: 14, background: 'white', border: '1px solid #f0e8e5', boxShadow: '0 1px 4px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', gap: 15 }}>
@@ -80,73 +112,383 @@ function Section({ label, children }) {
   );
 }
 
+// ─── Size Bar ─────────────────────────────────────────────────────────────────
+function SizeBar({ images }) {
+  const used      = calcTotalBytes(images);
+  const pct       = Math.min((used / MAX_TOTAL_BYTES) * 100, 100);
+  const exceeded  = used > MAX_TOTAL_BYTES;
+  const nearLimit = pct >= 80 && !exceeded;
+  const barColor  = exceeded ? '#c0392b' : nearLimit ? '#e67e22' : '#10b981';
+
+  if (images.length === 0) return null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ height: 5, borderRadius: 99, background: '#f0ece9', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: barColor, transition: 'width 0.3s ease, background 0.3s ease' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: barColor }}>
+          {formatBytes(used)} / {MAX_TOTAL_MB} MB used
+        </span>
+        {nearLimit && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#e67e22', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <AlertTriangle size={10} /> Near limit
+          </span>
+        )}
+        {exceeded && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <AlertTriangle size={10} /> Limit exceeded
+          </span>
+        )}
+      </div>
+      {exceeded && (
+        <div style={{ padding: '10px 13px', borderRadius: 10, background: 'rgba(192,57,43,0.06)', border: '1.5px solid rgba(192,57,43,0.2)', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+          <AlertTriangle size={14} style={{ color: '#c0392b', flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 11.5, color: '#78716c', lineHeight: 1.65, margin: 0 }}>
+            <strong style={{ color: '#c0392b' }}>Storage limit reached.</strong> Remove some uploaded images or switch to the{' '}
+            <strong style={{ color: '#1a1714' }}>Image URL</strong> tab — remote links don't consume storage quota.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── URL Input ────────────────────────────────────────────────────────────────
+function UrlImageInput({ onAdd }) {
+  const [val, setVal]         = useState('');
+  const [err, setErr]         = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleAdd = () => {
+    const url = val.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) { setErr('URL must start with http:// or https://'); return; }
+    setErr('');
+    setLoading(true);
+    const img = new Image();
+    img.onload  = () => { setLoading(false); onAdd(url); setVal(''); };
+    img.onerror = () => { setLoading(false); setErr('Could not load image from this URL. Check it and try again.'); };
+    img.src = url;
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 7 }}>
+        <input
+          type="url"
+          value={val}
+          onChange={e => { setVal(e.target.value); setErr(''); }}
+          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
+          placeholder="https://example.com/photo.jpg"
+          style={{ ...FIELD, flex: 1, fontSize: 12.5 }}
+        />
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={loading || !val.trim()}
+          style={{
+            padding: '0 16px', borderRadius: 10, border: 'none',
+            background: loading || !val.trim() ? '#e8ddd8' : 'linear-gradient(135deg,#c0392b,#e67e22)',
+            color: loading || !val.trim() ? '#b5a9a4' : 'white',
+            fontWeight: 700, fontSize: 12.5, cursor: loading || !val.trim() ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+            fontFamily: 'inherit', flexShrink: 0,
+          }}
+        >
+          {loading
+            ? <div style={{ width: 13, height: 13, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: 'white', animation: 'wrmSpin 0.7s linear infinite' }} />
+            : <><Link size={12} /> Add URL</>
+          }
+        </button>
+      </div>
+      {err && (
+        <p style={{ fontSize: 11, color: '#c0392b', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <AlertTriangle size={11} /> {err}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Image Uploader ───────────────────────────────────────────────────────────
 function ImageUploader({ images, onChange }) {
-  const inputRef = useRef(null);
+  const inputRef       = useRef(null);
+  const uploadedCount  = countUploaded(images);
+  const uploadLimitHit = uploadedCount >= MAX_UPLOAD_IMAGES;
+  const bytesExceeded  = calcTotalBytes(images) > MAX_TOTAL_BYTES;
+  const uploadDisabled = uploadLimitHit || bytesExceeded;
+
+  const [uploadTab, setUploadTab] = useState('upload');
+
   const addFiles = (e) => {
-    Array.from(e.target.files).forEach((file) => {
+    const files     = Array.from(e.target.files);
+    const remaining = MAX_UPLOAD_IMAGES - uploadedCount;
+
+    if (remaining <= 0) {
+      toast.error(`Upload limit reached (max ${MAX_UPLOAD_IMAGES} files). Use the Image URL tab instead.`);
+      e.target.value = '';
+      return;
+    }
+
+    const toProcess = files.slice(0, remaining);
+    if (files.length > toProcess.length) {
+      toast.warning(`Only ${toProcess.length} of ${files.length} image(s) added — upload limit is ${MAX_UPLOAD_IMAGES}.`);
+    }
+
+    toProcess.forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
         compressImage(reader.result).then(compressed => {
-          onChange((prev) => [...prev, compressed]);
+          onChange((prev) => {
+            const next = [...prev, compressed];
+            if (calcTotalBytes(next) > MAX_TOTAL_BYTES) {
+              toast.warning('Storage size limit exceeded — switch to the Image URL tab.');
+            }
+            return next;
+          });
         });
       };
       reader.readAsDataURL(file);
     });
     e.target.value = '';
   };
+
+  const addUrl = (url) => {
+    onChange((prev) => [...prev, url]);
+    toast.success('Image URL added!');
+  };
+
   const remove = (idx) => onChange((prev) => prev.filter((_, i) => i !== idx));
-  const move = (from, to) => onChange((prev) => {
+  const move   = (from, to) => onChange((prev) => {
     const next = [...prev];
     [next[from], next[to]] = [next[to], next[from]];
     return next;
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* ── Thumbnails ── */}
       {images.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-          {images.map((src, i) => (
-            <div key={i} className="wrm-thumb"
-              style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: '1', border: i === 0 ? '2px solid #b91c1c' : '1.5px solid #e7e5e4' }}>
-              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              {i === 0 && (
-                <span style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(185,28,28,0.88)', color: 'white', fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5 }}>Cover</span>
-              )}
-              <div className="wrm-thumb-ctrl"
-                style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                {i > 0 && (
-                  <button type="button" onClick={() => move(i, i - 1)}
-                    style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <ChevronLeft size={12} style={{ color: '#1c1917' }} />
-                  </button>
+          {images.map((src, i) => {
+            const isUrl = src.startsWith('http');
+            return (
+              <div key={i} className="wrm-thumb"
+                style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: '1', border: i === 0 ? '2px solid #b91c1c' : '1.5px solid #e7e5e4' }}>
+                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {i === 0 && (
+                  <span style={{ position: 'absolute', top: 4, left: 4, background: 'rgba(185,28,28,0.88)', color: 'white', fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 5 }}>Cover</span>
                 )}
-                <button type="button" onClick={() => remove(i)}
-                  style={{ width: 24, height: 24, borderRadius: '50%', background: '#c0392b', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <X size={11} color="white" />
-                </button>
-                {i < images.length - 1 && (
-                  <button type="button" onClick={() => move(i, i + 1)}
-                    style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                    <ChevronRight size={12} style={{ color: '#1c1917' }} />
-                  </button>
+                {isUrl && (
+                  <span style={{ position: 'absolute', bottom: 4, left: 4, background: 'rgba(0,0,0,0.55)', color: 'white', fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Link size={7} /> URL
+                  </span>
                 )}
+                <div className="wrm-thumb-ctrl"
+                  style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  {i > 0 && (
+                    <button type="button" onClick={() => move(i, i - 1)}
+                      style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <ChevronLeft size={12} style={{ color: '#1c1917' }} />
+                    </button>
+                  )}
+                  <button type="button" onClick={() => remove(i)}
+                    style={{ width: 24, height: 24, borderRadius: '50%', background: '#c0392b', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                    <X size={11} color="white" />
+                  </button>
+                  {i < images.length - 1 && (
+                    <button type="button" onClick={() => move(i, i + 1)}
+                      style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <ChevronRight size={12} style={{ color: '#1c1917' }} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '20px 12px', cursor: 'pointer', borderRadius: 12, background: '#fdf9f8', border: '1.5px dashed #e8d8d3' }}>
-        <UploadCloud size={22} style={{ color: '#c4b5b0' }} />
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#a8a29e' }}>
-          {images.length === 0 ? 'Upload images' : `Add more images (${images.length} uploaded)`}
-        </span>
-        <span style={{ fontSize: 10.5, color: '#c4b5b0' }}>First image becomes the cover · Hover to reorder</span>
-        <input ref={inputRef} type="file" accept="image/*" multiple onChange={addFiles} style={{ display: 'none' }} />
-      </label>
+
+      {/* ── Size bar ── */}
+      <SizeBar images={images} />
+
+      {/* ── Tab switcher ── */}
+      <div style={{ display: 'flex', background: '#f5f0ed', borderRadius: 10, padding: 3, gap: 2 }}>
+        {/* Upload File tab */}
+        <button
+          type="button"
+          onClick={() => setUploadTab('upload')}
+          style={{
+            flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+            fontWeight: 700, fontSize: 12, fontFamily: 'inherit', transition: 'all 0.15s',
+            background: uploadTab === 'upload' ? 'white' : 'transparent',
+            color: uploadTab === 'upload' ? '#1c1917' : '#a8a29e',
+            boxShadow: uploadTab === 'upload' ? '0 1px 6px rgba(0,0,0,0.08)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          }}
+        >
+          <HardDrive size={12} />
+          Upload File
+          {/* live counter badge */}
+          <span style={{
+            fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 20,
+            background: uploadLimitHit ? 'rgba(192,57,43,0.12)' : 'rgba(0,0,0,0.06)',
+            color: uploadLimitHit ? '#c0392b' : '#a8a29e',
+          }}>
+            {uploadedCount}/{MAX_UPLOAD_IMAGES}
+          </span>
+        </button>
+
+        {/* Image URL tab */}
+        <button
+          type="button"
+          onClick={() => setUploadTab('url')}
+          style={{
+            flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
+            fontWeight: 700, fontSize: 12, fontFamily: 'inherit', transition: 'all 0.15s',
+            background: uploadTab === 'url' ? 'white' : 'transparent',
+            color: uploadTab === 'url' ? '#1c1917' : '#a8a29e',
+            boxShadow: uploadTab === 'url' ? '0 1px 6px rgba(0,0,0,0.08)' : 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          }}
+        >
+          <Link size={12} />
+          Image URL
+          {(uploadLimitHit || bytesExceeded) && (
+            <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 5px', borderRadius: 20, background: 'rgba(16,185,129,0.12)', color: '#059669' }}>
+              Recommended
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ══ Panel: Upload File ══ */}
+      {uploadTab === 'upload' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+          {/* Limit-reached notice — appears above the dropzone when full */}
+          {uploadLimitHit && (
+            <div style={{
+              padding: '12px 14px', borderRadius: 11,
+              background: 'rgba(192,57,43,0.05)',
+              border: '1.5px solid rgba(192,57,43,0.22)',
+              display: 'flex', gap: 10, alignItems: 'flex-start',
+            }}>
+              <AlertTriangle size={15} style={{ color: '#c0392b', flexShrink: 0, marginTop: 1 }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <p style={{ fontSize: 12.5, fontWeight: 700, color: '#c0392b', margin: 0 }}>
+                  Upload limit reached — {MAX_UPLOAD_IMAGES}/{MAX_UPLOAD_IMAGES} files used
+                </p>
+                <p style={{ fontSize: 11.5, color: '#78716c', lineHeight: 1.65, margin: 0 }}>
+                  You can't upload more files here. To add more images, switch to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setUploadTab('url')}
+                    style={{ background: 'none', border: 'none', padding: 0, fontWeight: 700, color: '#c0392b', cursor: 'pointer', fontSize: 11.5, textDecoration: 'underline', fontFamily: 'inherit' }}
+                  >
+                    Image URL tab
+                  </button>
+                  {' '}— paste a public link, no upload limit.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Dropzone */}
+          <label style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 6, padding: '20px 12px',
+            cursor: uploadDisabled ? 'not-allowed' : 'pointer',
+            borderRadius: 12,
+            background: uploadDisabled ? '#fef5f5' : '#fdf9f8',
+            border: uploadDisabled ? '1.5px dashed rgba(192,57,43,0.38)' : '1.5px dashed #e8d8d3',
+            opacity: uploadDisabled ? 0.78 : 1,
+            transition: 'all 0.18s',
+          }}>
+            <UploadCloud size={22} style={{ color: uploadDisabled ? '#c0392b' : '#c4b5b0' }} />
+
+            {uploadLimitHit ? (
+              <>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#c0392b' }}>
+                  File upload disabled — limit reached
+                </span>
+                <span style={{ fontSize: 10.5, color: '#a8a29e', textAlign: 'center', lineHeight: 1.55 }}>
+                  Use the <strong>Image URL</strong> tab to add more images
+                </span>
+              </>
+            ) : bytesExceeded ? (
+              <>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#c0392b' }}>Upload disabled — storage full</span>
+                <span style={{ fontSize: 10.5, color: '#a8a29e', textAlign: 'center', lineHeight: 1.55 }}>
+                  Remove images or use the <strong>Image URL</strong> tab
+                </span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#a8a29e' }}>
+                  {uploadedCount === 0
+                    ? `Upload images (max ${MAX_UPLOAD_IMAGES} files)`
+                    : `Add more files (${uploadedCount}/${MAX_UPLOAD_IMAGES} used)`
+                  }
+                </span>
+                <span style={{ fontSize: 10.5, color: '#c4b5b0' }}>First image becomes the cover · Hover to reorder</span>
+              </>
+            )}
+
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={uploadDisabled}
+              onChange={addFiles}
+              style={{ display: 'none' }}
+            />
+          </label>
+
+          {/* Soft hint shown while slots still available */}
+          {!uploadLimitHit && (
+            <p style={{ fontSize: 10.5, color: '#c4b5b0', margin: 0, textAlign: 'center', lineHeight: 1.6 }}>
+              File uploads are limited to <strong style={{ color: '#a8a29e' }}>{MAX_UPLOAD_IMAGES} images</strong>.
+              {' '}Need more?{' '}
+              <button
+                type="button"
+                onClick={() => setUploadTab('url')}
+                style={{ background: 'none', border: 'none', padding: 0, fontWeight: 700, color: '#c0392b', cursor: 'pointer', fontSize: 10.5, fontFamily: 'inherit' }}
+              >
+                Use Image URL instead
+              </button>
+              {' '}— no limit.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ══ Panel: Image URL ══ */}
+      {uploadTab === 'url' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {(uploadLimitHit || bytesExceeded) && (
+            <div style={{ padding: '9px 12px', borderRadius: 9, background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.22)', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Link size={12} style={{ color: '#059669', flexShrink: 0 }} />
+              <p style={{ fontSize: 11.5, color: '#059669', fontWeight: 600, margin: 0 }}>
+                Image URLs don't count toward the upload limit or storage quota — add as many as you need.
+              </p>
+            </div>
+          )}
+          <UrlImageInput onAdd={addUrl} />
+          <p style={{ fontSize: 10.5, color: '#c4b5b0', margin: 0 }}>
+            Paste a public image link (e.g. from Google Drive, Imgur, Cloudinary). The first image is the cover.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
+// ─── Card Images ──────────────────────────────────────────────────────────────
 function CardImages({ images }) {
   const [idx, setIdx] = useState(0);
   if (!images.length) return <div style={{ height: 220, background: '#f5f0ed', flexShrink: 0 }} />;
@@ -185,82 +527,55 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
     return () => window.removeEventListener('keydown', fn);
   }, [saving, onClose]);
 
+  const bytesExceeded = calcTotalBytes(formData.images) > MAX_TOTAL_BYTES;
+
   return createPortal(
     <>
-      {/* Backdrop */}
       <div
         onClick={() => { if (!saving) onClose(); }}
-        style={{
-          position: 'fixed', inset: 0, zIndex: Z.formBackdrop,
-          background: 'rgba(10,6,4,0.72)', backdropFilter: 'blur(12px)',
-        }}
+        style={{ position: 'fixed', inset: 0, zIndex: Z.formBackdrop, background: 'rgba(10,6,4,0.72)', backdropFilter: 'blur(12px)' }}
       />
-
-      {/* Dialog */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          position: 'fixed',
-          top: '50%', left: '50%',
+          position: 'fixed', top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: Z.formDialog,
           width: 'min(600px, calc(100vw - 32px))',
-          /* KEY FIX: use a fixed height so the flex children can share it properly */
           height: 'min(680px, calc(100dvh - 48px))',
           borderRadius: 22,
           boxShadow: '0 40px 100px rgba(0,0,0,0.55)',
           background: 'white',
           animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)',
-          /* column flex so header + body + footer stack */
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
           fontFamily: "'DM Sans', sans-serif",
         }}
       >
-        {/* Gradient top bar */}
         <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,#c0392b 0%,#e67e22 55%,#f39c12 100%)' }} />
 
         {/* Header */}
-        <div style={{
-          flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 22px 12px',
-          borderBottom: '1px solid #f5ede9',
-          background: 'white',
-        }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px 12px', borderBottom: '1px solid #f5ede9', background: 'white' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
             <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.28)', flexShrink: 0 }}>
               <FileText size={17} color="white" />
             </div>
             <div>
               <p style={{ fontSize: 9.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.18em', color: '#c0392b', margin: '0 0 2px' }}>
-                {editingReport ? 'Edit Record' : 'New Report'}
+                {editingReport ? 'Edit Acyivity' : 'New Activity'}
               </p>
               <h3 style={{ fontWeight: 700, fontSize: 15.5, color: '#1a1714', margin: 0 }}>
-                {editingReport ? 'Update Report' : 'Add Weekly Report'}
+                {editingReport ? 'Update Activity' : 'Add Activity'}
               </h3>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f0ed', border: '1px solid #ede8e5', color: '#78716c', cursor: 'pointer', flexShrink: 0 }}
-          >
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f0ed', border: '1px solid #ede8e5', color: '#78716c', cursor: 'pointer', flexShrink: 0 }}>
             <X size={14} />
           </button>
         </div>
 
-        {/* Body — scrollable, takes remaining height */}
-        <div style={{
-          flex: 1,
-          minHeight: 0,        /* critical: lets flex child shrink below content size */
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          padding: '20px 26px',
-          background: '#fdfaf9',
-        }}>
+        {/* Body */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '20px 26px', background: '#fdfaf9' }}>
           <form id="wrm-form" onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
             <Section label="Report Images">
               <ImageUploader
                 images={formData.images}
@@ -299,48 +614,45 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
                 </select>
               </div>
             </Section>
-
           </form>
         </div>
 
         {/* Footer */}
-        <div style={{
-          flexShrink: 0,
-          padding: '15px 26px 20px',
-          borderTop: '1px solid #f0e8e5',
-          background: 'white',
-          display: 'flex', gap: 11,
-        }}>
-          <button
-            type="submit" form="wrm-form" disabled={saving}
-            style={{
-              flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12,
-              fontSize: 14, color: 'white', border: 'none',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              background: saving
-                ? 'linear-gradient(135deg,#dba8a1,#e8b8a8)'
-                : 'linear-gradient(135deg,#c0392b 0%,#e67e22 100%)',
-              boxShadow: saving ? 'none' : '0 4px 18px rgba(192,57,43,0.3)',
-              transition: 'all 0.18s', fontFamily: 'inherit',
-            }}
-          >
-            {saving && (
-              <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.5)', borderTopColor: 'white', animation: 'wrmSpin 0.8s linear infinite' }} />
-            )}
-            {saving ? 'Saving…' : editingReport ? 'Update Report' : 'Publish Report'}
-          </button>
-          <button
-            type="button" onClick={onClose} disabled={saving}
-            style={{
-              flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12,
-              fontSize: 14, background: '#f5f0ed', border: '1px solid #e8ddd8',
-              color: '#57534e', cursor: saving ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s', fontFamily: 'inherit', opacity: saving ? 0.6 : 1,
-            }}
-          >
-            Cancel
-          </button>
+        <div style={{ flexShrink: 0, padding: '15px 26px 20px', borderTop: '1px solid #f0e8e5', background: 'white', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {bytesExceeded && (
+            <div style={{ padding: '9px 13px', borderRadius: 10, background: 'rgba(192,57,43,0.06)', border: '1.5px solid rgba(192,57,43,0.22)', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <AlertTriangle size={13} style={{ color: '#c0392b', flexShrink: 0 }} />
+              <p style={{ fontSize: 11.5, color: '#c0392b', fontWeight: 700, margin: 0 }}>
+                Cannot save — storage limit exceeded. Remove images or use Image URL.
+              </p>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 11 }}>
+            <button
+              type="submit" form="wrm-form" disabled={saving || bytesExceeded}
+              style={{
+                flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12,
+                fontSize: 14, color: 'white', border: 'none',
+                cursor: saving || bytesExceeded ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                background: saving || bytesExceeded
+                  ? 'linear-gradient(135deg,#dba8a1,#e8b8a8)'
+                  : 'linear-gradient(135deg,#c0392b 0%,#e67e22 100%)',
+                boxShadow: saving || bytesExceeded ? 'none' : '0 4px 18px rgba(192,57,43,0.3)',
+                transition: 'all 0.18s', fontFamily: 'inherit',
+              }}
+            >
+              {saving && (
+                <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2.5px solid rgba(255,255,255,0.5)', borderTopColor: 'white', animation: 'wrmSpin 0.8s linear infinite' }} />
+              )}
+              {saving ? 'Saving…' : editingReport ? 'Update Activity' : 'Publish Activity'}
+            </button>
+            <button
+              type="button" onClick={onClose} disabled={saving}
+              style={{ flex: 1, fontWeight: 700, padding: '14px 0', borderRadius: 12, fontSize: 14, background: '#f5f0ed', border: '1px solid #e8ddd8', color: '#57534e', cursor: saving ? 'not-allowed' : 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     </>,
@@ -348,6 +660,7 @@ function FormModal({ editingReport, formData, setFormData, saving, onSubmit, onC
   );
 }
 
+// ─── Delete Modal ─────────────────────────────────────────────────────────────
 function DeleteModal({ report, onConfirm, onCancel, deleting }) {
   const images = getImages(report);
   useEffect(() => {
@@ -363,26 +676,10 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
 
   return createPortal(
     <>
-      <div
-        onClick={() => { if (!deleting) onCancel(); }}
-        style={{ position: 'fixed', inset: 0, zIndex: Z.deleteBackdrop, background: 'rgba(10,6,4,0.55)', backdropFilter: 'blur(4px)' }}
-      />
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          position: 'fixed', top: '50%', left: '50%',
-          transform: 'translate(-50%,-50%)',
-          zIndex: Z.deleteDialog,
-          width: 'min(460px, calc(100vw - 32px))',
-          borderRadius: 22,
-          boxShadow: '0 40px 100px rgba(0,0,0,0.65)',
-          background: 'white',
-          animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
-          fontFamily: "'DM Sans', sans-serif",
-        }}
-      >
+      <div onClick={() => { if (!deleting) onCancel(); }}
+        style={{ position: 'fixed', inset: 0, zIndex: Z.deleteBackdrop, background: 'rgba(10,6,4,0.55)', backdropFilter: 'blur(4px)' }} />
+      <div onClick={e => e.stopPropagation()}
+        style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: Z.deleteDialog, width: 'min(460px, calc(100vw - 32px))', borderRadius: 22, boxShadow: '0 40px 100px rgba(0,0,0,0.65)', background: 'white', animation: 'wrmOmIn 0.22s cubic-bezier(0.34,1.4,0.64,1)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'DM Sans', sans-serif" }}>
         <div style={{ height: 4, flexShrink: 0, background: 'linear-gradient(90deg,#c0392b 0%,#e67e22 55%,#f39c12 100%)' }} />
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 26px 18px', borderBottom: '1px solid #f5ede9', background: 'white' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
@@ -395,8 +692,7 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
             </div>
           </div>
           {!deleting && (
-            <button onClick={onCancel}
-              style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f0ed', border: '1px solid #ede8e5', color: '#78716c', cursor: 'pointer' }}>
+            <button onClick={onCancel} style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f0ed', border: '1px solid #ede8e5', color: '#78716c', cursor: 'pointer' }}>
               <X size={14} />
             </button>
           )}
@@ -417,7 +713,7 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
           <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(192,57,43,0.05)', border: '1.5px solid rgba(192,57,43,0.14)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <AlertTriangle size={15} style={{ color: '#c0392b', flexShrink: 0, marginTop: 1 }} />
             <p style={{ fontSize: 12.5, color: '#78716c', lineHeight: 1.65, margin: 0 }}>
-              <strong style={{ color: '#44403c' }}>This action cannot be undone.</strong> The report and all its images will be permanently removed.
+              <strong style={{ color: '#44403c' }}>This action cannot be undone.</strong> The activity and all its images will be permanently removed.
             </p>
           </div>
         </div>
@@ -440,6 +736,7 @@ function DeleteModal({ report, onConfirm, onCancel, deleting }) {
   );
 }
 
+// ─── Report Card ──────────────────────────────────────────────────────────────
 function ReportCard({ report, onEdit, onDelete, isArchived }) {
   const s    = getCategoryStyle(report.category);
   const imgs = getImages(report);
@@ -492,6 +789,7 @@ function ReportCard({ report, onEdit, onDelete, isArchived }) {
   );
 }
 
+// ─── Empty State ──────────────────────────────────────────────────────────────
 function EmptyState({ isArchived }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 0', background: 'white', borderRadius: 20, border: '1.5px dashed #f0d8d3' }}>
@@ -508,6 +806,7 @@ function EmptyState({ isArchived }) {
   );
 }
 
+// ─── Main Export ──────────────────────────────────────────────────────────────
 export function WeeklyReportsManager() {
   const [reports,       setReports]       = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -528,7 +827,7 @@ export function WeeklyReportsManager() {
       const data = await getWeeklyReports();
       setReports(data.sort((a, b) => String(b.id).localeCompare(String(a.id))));
     } catch (err) {
-      console.error('[WeeklyReports] loadReports failed:', err);
+      console.error('[Activity] loadReports failed:', err);
       toast.error('Failed to load reports');
     } finally { setLoading(false); }
   };
@@ -536,6 +835,10 @@ export function WeeklyReportsManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.images.length === 0) { toast.error('Please upload at least one image!'); return; }
+    if (calcTotalBytes(formData.images) > MAX_TOTAL_BYTES) {
+      toast.error('Storage limit exceeded. Remove images or use Image URL.');
+      return;
+    }
     setSaving(true);
     try {
       const compressedImages = await compressAll(formData.images);
@@ -550,12 +853,12 @@ export function WeeklyReportsManager() {
       if (editingReport) {
         await saveWeeklyReport(editingReport.id, payload);
         setReports(prev => prev.map(r => r.id === editingReport.id ? { ...payload, id: editingReport.id } : r));
-        toast.success('Report updated!');
+        toast.success('Activity updated!');
       } else {
         const newId = Date.now().toString();
         await saveWeeklyReport(newId, payload);
         setReports(prev => [{ ...payload, id: newId }, ...prev]);
-        toast.success('Report published!');
+        toast.success('Activity published!');
         setTab('live');
       }
       resetForm();
@@ -625,7 +928,7 @@ export function WeeklyReportsManager() {
       <div className="wrm-ph">
         <div>
           <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#c0392b', marginBottom: 4 }}>Content Management</p>
-          <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917', lineHeight: 1, margin: 0 }}>Weekly Activities</h2>
+          <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: '0.05em', fontSize: '2.2rem', color: '#1c1917', lineHeight: 1, margin: 0 }}>Activity Management</h2>
           <p style={{ fontSize: 13, color: '#a8a29e', marginTop: 4, marginBottom: 0 }}>
             <span style={{ color: '#10b981', fontWeight: 700 }}>{activeReports.length}</span> live
             {archivedReports.length > 0 && <> · {archivedReports.length} archived</>}
@@ -635,7 +938,7 @@ export function WeeklyReportsManager() {
           onClick={() => setIsFormOpen(true)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, padding: '11px 22px', borderRadius: 12, color: 'white', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 14px rgba(192,57,43,0.3)', fontFamily: 'inherit' }}
         >
-          Add Report
+          Add Activity
         </button>
       </div>
 
@@ -660,7 +963,7 @@ export function WeeklyReportsManager() {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 15px', borderRadius: 11, background: 'rgba(120,113,108,0.05)', border: '1px solid rgba(120,113,108,0.12)', marginBottom: 22 }}>
           <Archive size={13} style={{ color: '#b5b0ac', flexShrink: 0, marginTop: 1 }} />
           <p style={{ fontSize: 12, color: '#a8a29e', lineHeight: 1.6, margin: 0 }}>
-            These reports are older than 7 days and <strong style={{ color: '#78716c' }}>not visible</strong> on the public homepage.
+            These activities are older than 7 days and <strong style={{ color: '#78716c' }}>not visible</strong> on the public homepage.
           </p>
         </div>
       )}

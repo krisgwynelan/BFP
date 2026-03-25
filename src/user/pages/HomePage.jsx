@@ -264,7 +264,7 @@ function WeeklyUpdatesSlideshow({ reports, onOpenSlideshow }) {
   return (
     <div style={{
       display: 'flex',
-      height: 560,
+      height: 650,
       overflow: 'hidden',
       background: '#000',
     }}>
@@ -282,7 +282,7 @@ function WeeklyUpdatesSlideshow({ reports, onOpenSlideshow }) {
               inset: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'fit',         /* ✅ fixed: was 'fit' */
+              objectFit: 'cover',         /* ✅ fixed: was 'fit' */
               objectPosition: 'center',
               zIndex: 1,
               animation: 'wus-fadeOut 0.6s ease forwards',
@@ -301,7 +301,7 @@ function WeeklyUpdatesSlideshow({ reports, onOpenSlideshow }) {
             inset: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'fit',           /* ✅ fixed: was invalid 'fit' */
+            objectFit: 'cover',           /* ✅ fixed: was invalid 'fit' */
             objectPosition: 'center',
             zIndex: 2,
             animation: 'wus-fadeIn 0.6s ease forwards',
