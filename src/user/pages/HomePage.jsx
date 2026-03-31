@@ -200,7 +200,7 @@ function SlideshowPortal({ open, onClose, reports, jumpToReportRef }) {
   if (!open) return null;
   return createPortal(
     <>
-      <div style={{ position:'fixed', inset:0, zIndex:100000 }}>
+      <div style={{ position:'fixed', inset:0, zIndex:300000 }}>
         <WeeklyReportsSlideshow reports={reports} onRegisterJump={fn => { jumpToReportRef.current = fn; }} />
       </div>
       <button type="button" onClick={onClose}
@@ -242,7 +242,7 @@ function WeeklyUpdatesSlideshow({ reports, onOpenSlideshow }) {
   const resetAuto = useCallback(() => {
     clearInterval(autoRef.current);
     if (total < 2) return;
-    autoRef.current = setInterval(next, 10000);
+    autoRef.current = setInterval(next, 3000);
   }, [next, total]);
 
   useEffect(() => { resetAuto(); return () => clearInterval(autoRef.current); }, [resetAuto]);
@@ -613,7 +613,7 @@ export function HomePage() {
               <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontWeight:900, fontSize:'clamp(2rem,4.5vw,3.6rem)', color:D.red, letterSpacing:'.04em' }}>Updates</span>
             </h2>
             <p style={{ fontSize:15, color:'#6B6258', fontFamily:"'Barlow',sans-serif", fontWeight:400, lineHeight:1.75, maxWidth:440, margin:'0 auto' }}>
-              Station bulletins, training highlights, events, and team milestones
+              Station bulletins, training highlights, events, and station milestones
             </p>
           </div>
 
